@@ -1465,12 +1465,12 @@
                             <span class="section-title-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                             </span>
-                            Топ 10 фильмов для просмотра
+                            {{ t('top10_movies') }}
                         </h2>
-                        <p class="section-subtitle">Отобрано нашей редакцией</p>
+                        <p class="section-subtitle">{{ t('editor_pick') }}</p>
                     </div>
                     <button class="view-all-btn">
-                        Все
+                        {{ t('all') }}
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
                     </button>
                 </div>
@@ -1495,11 +1495,11 @@
                             <span class="section-title-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                             </span>
-                            Популярные фильмы
+                            {{ t('popular_movies') }}
                         </h2>
                     </div>
                     <button class="view-all-btn">
-                        Все
+                        {{ t('all') }}
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
                     </button>
                 </div>
@@ -1524,12 +1524,12 @@
                             <span class="section-title-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             </span>
-                            Скоро в прокате
+                            {{ t('coming_soon') }}
                         </h2>
-                        <p class="section-subtitle">Скоро на Streamit</p>
+                        <p class="section-subtitle">{{ t('soon_on_streamit') }}</p>
                     </div>
                     <button class="view-all-btn">
-                        Все
+                        {{ t('all') }}
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
                     </button>
                 </div>
@@ -1554,12 +1554,12 @@
                             <span class="section-title-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                             </span>
-                            Рекомендуем вам
+                            {{ t('recommended_for_you') }}
                         </h2>
-                        <p class="section-subtitle">На основе вашей истории просмотров</p>
+                        <p class="section-subtitle">{{ t('based_on_history') }}</p>
                     </div>
                     <button class="view-all-btn">
-                        Все
+                        {{ t('all') }}
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
                     </button>
                 </div>
@@ -1584,7 +1584,7 @@
                             <span class="section-title-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                             </span>
-                            Фильмы по жанрам
+                            {{ t('movies_by_genre') }}
                         </h2>
                     </div>
                 </div>
@@ -1648,13 +1648,13 @@
         ];
 
         const genreLabels = {
-            action: 'Боевик', drama: 'Драма', horror: 'Ужасы', scifi: 'Фантастика',
-            comedy: 'Комедия', thriller: 'Триллер', romance: 'Мелодрама',
-            fantasy: 'Фэнтези', mystery: 'Детектив', animation: 'Мультфильм',
-            documentary: 'Документальный'
+            action: t('action'), drama: t('drama'), horror: t('horror'), scifi: t('scifi'),
+            comedy: t('comedy'), thriller: t('thriller'), romance: t('romance'),
+            fantasy: t('fantasy'), mystery: t('mystery'), animation: t('animation'),
+            documentary: t('documentary'), crime: t('crime')
         };
 
-        const genreLinks = ['Криминал', 'Детектив', 'Фантастика', 'Ужасы', 'Комедия', 'Мелодрама', 'Триллер', 'Фэнтези', 'Боевик', 'Мультфильм', 'Документальный', 'Драма'];
+        const genreLinks = [t('crime'), t('mystery'), t('scifi'), t('horror'), t('comedy'), t('romance'), t('thriller'), t('fantasy'), t('action'), t('animation'), t('documentary'), t('drama')];
 
         // ============================================
         // RENDER FUNCTIONS
@@ -1664,11 +1664,11 @@
             card.className = 'movie-card';
             let badgeHtml = '';
             if (badge === 'new') {
-                badgeHtml = '<span class="movie-card-badge badge-new">Новинка</span>';
+                badgeHtml = `<span class="movie-card-badge badge-new">${t('new_releases')}</span>`;
             } else if (badge === 'top') {
-                badgeHtml = '<span class="movie-card-badge badge-top">Топ 10</span>';
+                badgeHtml = `<span class="movie-card-badge badge-top">${t('top10')}</span>`;
             } else if (badge === 'coming') {
-                badgeHtml = '<span class="movie-card-badge badge-coming">Скоро</span>';
+                badgeHtml = `<span class="movie-card-badge badge-coming">${t('coming_soon')}</span>`;
             }
 
             const genreChips = genres.slice(0, 2).map(g => `<span class="genre-chip">${genreLabels[g] || g}</span>`).join('');
@@ -1687,7 +1687,7 @@
                         </div>
                         <button class="trailer-btn">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
-                            Трейлер
+                            ${t('movies')}
                         </button>
                     </div>
                     <div class="movie-card-info">
