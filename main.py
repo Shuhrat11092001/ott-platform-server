@@ -123,6 +123,16 @@ TRANSLATIONS = {
         'mystery': 'Detektiv',
         'animation': 'Multfilm',
         'documentary': 'Hujjatli',
+        'crime': 'Jinoyat',
+        # Top sections
+        'top10_movies': 'Ko\'rish uchun top 10 film',
+        'editor_pick': 'Tahririyat tomonidan tanlangan',
+        'popular_movies': 'Ommabop filmlar',
+        'coming_soon': 'Tez orada kinoteatrlarda',
+        'soon_on_streamit': 'Tez orada Streamit\'da',
+        'recommended_for_you': 'Sizga tavsiya etamiz',
+        'based_on_history': 'Tomosha tarixingiz asosida',
+        'movies_by_genre': 'Janrlar bo\'yicha filmlar',
         # Profil
         'profile_title': 'Profil',
         'profile_settings': 'Sozlamalar / Profil',
@@ -263,6 +273,16 @@ TRANSLATIONS = {
         'mystery': 'Детектив',
         'animation': 'Мультфильм',
         'documentary': 'Документальный',
+        'crime': 'Криминал',
+        # Top sections
+        'top10_movies': 'Топ 10 фильмов для просмотра',
+        'editor_pick': 'Отобрано нашей редакцией',
+        'popular_movies': 'Популярные фильмы',
+        'coming_soon': 'Скоро в прокате',
+        'soon_on_streamit': 'Скоро на Streamit',
+        'recommended_for_you': 'Рекомендуем вам',
+        'based_on_history': 'На основе вашей истории просмотров',
+        'movies_by_genre': 'Фильмы по жанрам',
         # Профиль
         'profile_title': 'Профиль',
         'profile_settings': 'Настройки / Профиль',
