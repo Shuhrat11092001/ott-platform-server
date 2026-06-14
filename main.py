@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Request, Form, HTTPException, Response, redirect
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request, Form, HTTPException, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
@@ -11,6 +11,7 @@ import redis
 import os
 import hashlib
 from dotenv import load_dotenv
+
 
 app = FastAPI()
 logging.basicConfig(level=logging.DEBUG)
@@ -446,7 +447,7 @@ async def set_language(request: Request):
     # Получаем referer для редиректа обратно
     referer = request.headers.get('referer', '/')
     
-    response = redirect(referer)
+    response = RedirectResponse(referer)
     response.set_cookie(key='lang', value=lang, max_age=31536000, httponly=False)  # 1 год
     return response
 
@@ -459,7 +460,7 @@ async def set_language_get(request: Request, lang: str):
     # Получаем referer для редиректа обратно
     referer = request.headers.get('referer', '/')
     
-    response = redirect(referer)
+    response = RedirectResponse(referer)
     response.set_cookie(key='lang', value=lang, max_age=31536000, httponly=False)  # 1 год
     return response
 
