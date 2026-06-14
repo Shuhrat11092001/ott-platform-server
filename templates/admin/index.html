@@ -1,0 +1,2023 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamAdmin — Панель управления</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        dark: { 50:'#f6f6f7',100:'#e2e3e5',200:'#c4c5cb',300:'#a1a2ab',400:'#8e8f99',500:'#6b6c76',600:'#4a4b54',700:'#2e2f38',800:'#1a1b24',900:'#111118',950:'#0a0a10' },
+                        accent: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81' },
+                        glass: { light:'rgba(255,255,255,0.08)',dark:'rgba(0,0,0,0.2)' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { scrollbar-width: thin; scrollbar-color: #4f46e5 transparent; }
+        *::-webkit-scrollbar { width: 6px; }
+        *::-webkit-scrollbar-track { background: transparent; }
+        *::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 3px; }
+
+        [data-theme="dark"] body { background: #0a0a10; color: #e2e3e5; }
+        [data-theme="light"] body { background: #f6f6f7; color: #1a1b24; }
+
+        .sidebar { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s ease; z-index: 50; }
+        .sidebar-overlay { transition: opacity 0.3s ease; z-index: 40; }
+
+        .page-transition { animation: fadeIn 0.4s cubic-bezier(0.4,0,0.2,1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card-hover { transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+
+        .drop-zone { transition: all 0.3s ease; }
+        .drop-zone.drag-over { border-color: #6366f1; background: rgba(99,102,241,0.1); transform: scale(1.02); }
+
+        .chip { animation: chipIn 0.3s cubic-bezier(0.4,0,0.2,1); }
+        @keyframes chipIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+        .toast-enter { animation: toastIn 0.4s cubic-bezier(0.4,0,0.2,1); }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+        .toast-exit { animation: toastOut 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
+        @keyframes toastOut { to { opacity: 0; transform: translateX(100px); } }
+
+        .nav-item { position: relative; transition: all 0.2s ease; }
+        .nav-item::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:0; background:#6366f1; border-radius:0 3px 3px 0; transition:height 0.2s ease; }
+        .nav-item:hover::before, .nav-item.active::before { height:60%; }
+        .nav-item.active { background: rgba(99,102,241,0.15); color: #818cf8; }
+
+        [data-theme="light"] .nav-item.active { background: rgba(99,102,241,0.1); color: #4f46e5; }
+
+        .glass-card { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        [data-theme="dark"] .glass-card { background: rgba(30,30,45,0.6); border: 1px solid rgba(255,255,255,0.06); }
+        [data-theme="light"] .glass-card { background: rgba(255,255,255,0.8); border: 1px solid rgba(0,0,0,0.06); }
+
+        .input-field { transition: all 0.2s ease; }
+        [data-theme="dark"] .input-field { background: rgba(30,30,45,0.8); border: 1px solid rgba(255,255,255,0.08); color: #e2e3e5; }
+        [data-theme="light"] .input-field { background: #fff; border: 1px solid rgba(0,0,0,0.12); color: #1a1b24; }
+        .input-field:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); outline: none; }
+        .input-field.error { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.15); }
+
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); transition: all 0.3s ease; }
+        .btn-primary:hover { background: linear-gradient(135deg, #818cf8, #6366f1); transform: translateY(-1px); box-shadow: 0 8px 25px rgba(99,102,241,0.3); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .stat-card { position: relative; overflow: hidden; }
+        .stat-card::after { content:''; position:absolute; top:-50%; right:-50%; width:100%; height:100%; background:radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%); pointer-events:none; }
+
+        .loading-spinner { border: 3px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .multi-select-option { cursor: pointer; transition: all 0.15s ease; }
+        .multi-select-option:hover { background: rgba(99,102,241,0.1); }
+        .multi-select-option.selected { background: rgba(99,102,241,0.2); color: #818cf8; }
+
+        [data-theme="light"] .multi-select-option.selected { color: #4f46e5; }
+
+        .table-row { transition: all 0.2s ease; }
+        [data-theme="dark"] .table-row:hover { background: rgba(99,102,241,0.05); }
+        [data-theme="light"] .table-row:hover { background: rgba(99,102,241,0.03); }
+
+        .notification-badge { animation: pulse-badge 2s infinite; }
+        @keyframes pulse-badge { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); position: fixed; top: 0; left: 0; height: 100vh; }
+            .sidebar.open { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen">
+    <!-- Sidebar Overlay (mobile) -->
+    <div id="sidebarOverlay" class="sidebar-overlay fixed inset-0 bg-black/50 hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-64 flex flex-col glass-card">
+        <!-- Logo -->
+        <div class="p-6 flex items-center gap-3 border-b dark:border-white/5 border-black/5">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight">StreamAdmin</h1>
+                <p class="text-xs opacity-50" data-i18n="sidebar_version">v2.0.0</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+            <button class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left" data-page="dashboard" onclick="navigateTo('dashboard')">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                <span data-i18n="nav_dashboard">Dashboard</span>
+            </button>
+            <button class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left" data-page="add-movie" onclick="navigateTo('add-movie')">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
+                <span data-i18n="nav_add_movie">Добавить фильм</span>
+            </button>
+            <button class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left" data-page="add-tv" onclick="navigateTo('add-tv')">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <span data-i18n="nav_add_tv">Добавить ТВ-канал</span>
+            </button>
+            <div class="pt-4 pb-2 px-4">
+                <p class="text-xs font-semibold uppercase tracking-wider opacity-30" data-i18n="nav_lists">Списки</p>
+            </div>
+            <button class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left" data-page="movies-list" onclick="navigateTo('movies-list')">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>
+                <span data-i18n="nav_movies_list">Фильмы</span>
+                <span id="movieCount" class="ml-auto text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full">0</span>
+            </button>
+            <button class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left" data-page="tv-list" onclick="navigateTo('tv-list')">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span data-i18n="nav_tv_list">ТВ-каналы</span>
+                <span id="tvCount" class="ml-auto text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full">0</span>
+            </button>
+            <button class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left" data-page="users-list" onclick="navigateTo('users-list')">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+                <span data-i18n="nav_users">Пользователи</span>
+                <span class="ml-auto bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full text-xs" id="usersCount">0</span>
+            </button>
+            <button class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left" data-page="subscriptions" onclick="navigateTo('subscriptions')">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span data-i18n="nav_subscriptions">Подписки</span>
+            </button>
+            <button class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left" data-page="referral" onclick="navigateTo('referral')">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span data-i18n="nav_referral">Реферальная программа</span>
+            </button>
+        </nav>
+
+        <!-- Bottom Section -->
+        <div class="p-4 border-t dark:border-white/5 border-black/5 space-y-2">
+            <!-- ... -->
+            <button onclick="toggleTheme()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left hover:bg-white/5 transition-colors">
+                <svg id="themeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                <span id="themeLabel" data-i18n="theme_light">Светлая тема</span>
+            </button>
+            <button class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left hover:bg-red-500/10 text-red-400 transition-colors" onclick="showToast('logout','info')">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                <span data-i18n="nav_logout">Выйти</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="transition-all duration-300" id="mainContent">
+        <!-- Topbar -->
+        <header class="sticky top-0 z-30 glass-card border-b dark:border-white/5 border-black/5">
+            <div class="flex items-center justify-between px-4 md:px-6 py-3">
+                <!-- Left -->
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl hover:bg-white/5 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <!-- Search -->
+                    <div class="relative hidden sm:block">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <input type="text" placeholder="Поиск..." data-i18n-placeholder="search_placeholder" class="input-field w-64 lg:w-80 pl-10 pr-4 py-2 rounded-xl text-sm">
+                    </div>
+                </div>
+
+                <!-- Right -->
+                <div class="flex items-center gap-2">
+                    <!-- Language Switcher -->
+                    <div class="relative">
+                        <button id="langBtn" onclick="toggleLangMenu()" class="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors text-sm">
+                            <span id="currentLangFlag">🇷🇺</span>
+                            <span id="currentLangCode" class="hidden sm:inline">RU</span>
+                            <svg class="w-3 h-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="langMenu" class="hidden absolute right-0 top-full mt-2 w-44 glass-card rounded-xl shadow-xl overflow-hidden z-50">
+                            <button onclick="setLanguage('ru')" class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/5 transition-colors">🇷🇺 Русский</button>
+                            <button onclick="setLanguage('en')" class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/5 transition-colors">🇬🇧 English</button>
+                            <button onclick="setLanguage('es')" class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/5 transition-colors">🇪🇸 Español</button>
+                        </div>
+                    </div>
+
+                    <!-- Notifications
+                    <button class="relative p-2 rounded-xl hover:bg-white/5 transition-colors" onclick="toggleNotifications()">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full notification-badge"></span>
+                        <div id="notifPanel" class="hidden absolute right-0 top-full mt-2 w-72 glass-card rounded-xl shadow-xl overflow-hidden z-50 p-3">
+                            <p class="text-xs font-semibold opacity-40 uppercase tracking-wider mb-2" data-i18n="notifications">Уведомления</p>
+                            <div class="space-y-2">
+                                <div class="p-2 rounded-lg bg-indigo-500/10 text-sm">🎬 Новый фильм добавлен</div>
+                                <div class="p-2 rounded-lg bg-purple-500/10 text-sm">📺 Канал «HBO» обновлён</div>
+                                <div class="p-2 rounded-lg bg-green-500/10 text-sm">✅ Система работает стабильно</div>
+                            </div>
+                        </div>
+                    </button> -->
+
+                    <!-- Avatar -->
+                    <div class="flex items-center gap-2 ml-2 pl-3 border-l dark:border-white/10 border-black/10">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">A</div>
+                        <div class="hidden sm:block">
+                            <p class="text-sm font-medium leading-tight">Admin</p>
+                            <p class="text-xs opacity-40">Super Admin</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Pages Container -->
+        <main class="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+
+            <!-- ===== DASHBOARD PAGE ===== -->
+            <div id="page-dashboard" class="page-transition">
+                <div class="mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold" data-i18n="dashboard_title">Панель управления</h2>
+                    <p class="opacity-50 mt-1" data-i18n="dashboard_subtitle">Обзор вашего стримингового сервиса</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                    <div class="stat-card glass-card rounded-2xl p-5 md:p-6 card-hover">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>
+                            </div>
+                            <span class="text-xs font-medium text-green-400 bg-green-500/10 px-2 py-1 rounded-full">+3</span>
+                        </div>
+                        <p class="text-2xl md:text-3xl font-bold" id="statMovies">0</p>
+                        <p class="text-sm opacity-50 mt-1" data-i18n="stat_total_movies">Всего фильмов</p>
+                    </div>
+                    <div class="stat-card glass-card rounded-2xl p-5 md:p-6 card-hover">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </div>
+                            <span class="text-xs font-medium text-green-400 bg-green-500/10 px-2 py-1 rounded-full">+1</span>
+                        </div>
+                        <p class="text-2xl md:text-3xl font-bold" id="statChannels">0</p>
+                        <p class="text-sm opacity-50 mt-1" data-i18n="stat_total_channels">Всего ТВ-каналов</p>
+                    </div>
+                    <div class="stat-card glass-card rounded-2xl p-5 md:p-6 card-hover">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <span class="text-xs font-medium text-green-400 bg-green-500/10 px-2 py-1 rounded-full">+4</span>
+                        </div>
+                        <p class="text-2xl md:text-3xl font-bold" id="statToday">0</p>
+                        <p class="text-sm opacity-50 mt-1" data-i18n="stat_added_today">Добавлено сегодня</p>
+                    </div>
+                    <div class="stat-card glass-card rounded-2xl p-5 md:p-6 card-hover">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            </div>
+                            <span class="text-xs font-medium text-green-400 bg-green-500/10 px-2 py-1 rounded-full">↑ 12%</span>
+                        </div>
+                        <p class="text-2xl md:text-3xl font-bold">1,247</p>
+                        <p class="text-sm opacity-50 mt-1" data-i18n="stat_views">Просмотры</p>
+                    </div>
+                </div>
+
+                <!-- Recent Items -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Recent Movies -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="recent_movies">Последние фильмы</h3>
+                        <div id="dashboardMovies" class="space-y-3">
+                            <p class="text-sm opacity-40 py-4 text-center" data-i18n="no_movies_yet">Пока нет фильмов</p>
+                        </div>
+                    </div>
+                    <!-- Recent Channels -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="recent_channels">Последние ТВ-каналы</h3>
+                        <div id="dashboardChannels" class="space-y-3">
+                            <p class="text-sm opacity-40 py-4 text-center" data-i18n="no_channels_yet">Пока нет каналов</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== ADD MOVIE PAGE ===== -->
+            <div id="page-add-movie" class="page-transition hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold" data-i18n="add_movie_title">Добавить фильм</h2>
+                    <p class="opacity-50 mt-1" data-i18n="add_movie_subtitle">Заполните информацию о фильме</p>
+                </div>
+
+                <form id="movieForm" onsubmit="return addMovie(event)" class="max-w-4xl space-y-6">
+                    <!-- Poster Upload -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="poster_title">Постер</h3>
+                        <div id="movieDropZone" class="drop-zone border-2 border-dashed rounded-xl p-8 text-center cursor-pointer" onclick="document.getElementById('moviePosterInput').click()">
+                            <input type="file" id="moviePosterInput" accept="image/*" class="hidden" onchange="handlePosterUpload(this, 'movie')">
+                            <input type="hidden" name="moviePoster" id="moviePosterInputHidden" value="">
+                            <div id="moviePosterPreview" class="hidden mb-4">
+                                <img id="moviePosterImg" class="mx-auto max-h-64 rounded-xl shadow-lg" alt="Poster">
+                            </div>
+                            <div id="movieDropContent">
+                                <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <p class="text-sm font-medium" data-i18n="drag_drop">Перетащите изображение сюда</p>
+                                <p class="text-xs opacity-40 mt-1" data-i18n="or_click">или нажмите для выбора</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Basic Info -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="basic_info">Основная информация</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2" data-i18n="movie_name">Название фильма *</label>
+                                <input type="text" name="movieName" required class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="Введите название...">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2" data-i18n="movie_year">Год выпуска *</label>
+                                <input type="number" name="movieYear" required min="1900" max="2030" class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="2024">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2" data-i18n="movie_duration">Продолжительность (мин.)</label>
+                                <input type="number" name="movieDuration" min="1" class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="120">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2" data-i18n="movie_rating">Рейтинг (IMDb)</label>
+                                <input type="number" name="movieRating" min="0" max="10" step="0.1" class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="8.5">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Язык</label>
+                                <select name="movieLanguage" class="input-field w-full px-4 py-3 rounded-xl text-sm">
+                                    <option value="">Выберите язык</option>
+                                    <option value="Русский">Русский</option>
+                                    <option value="Узбекский">Узбекский</option>
+                                    <option value="Английский">Английский</option>
+                                    <option value="Турецкий">Турецкий</option>
+                                    <option value="Корейский">Корейский</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Genres -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="genres">Жанры</h3>
+                        <div id="genreSelect" class="flex flex-wrap gap-2">
+                            <div class="multi-select-option px-4 py-2 rounded-xl text-sm border dark:border-white/10 border-black/10" data-genre="Боевик" onclick="toggleGenre(this)">Боевик</div>
+                            <div class="multi-select-option px-4 py-2 rounded-xl text-sm border dark:border-white/10 border-black/10" data-genre="Драма" onclick="toggleGenre(this)">Драма</div>
+                            <div class="multi-select-option px-4 py-2 rounded-xl text-sm border dark:border-white/10 border-black/10" data-genre="Комедия" onclick="toggleGenre(this)">Комедия</div>
+                            <div class="multi-select-option px-4 py-2 rounded-xl text-sm border dark:border-white/10 border-black/10" data-genre="Триллер" onclick="toggleGenre(this)">Триллер</div>
+                            <div class="multi-select-option px-4 py-2 rounded-xl text-sm border dark:border-white/10 border-black/10" data-genre="Фантастика" onclick="toggleGenre(this)">Фантастика</div>
+                            <div class="multi-select-option px-4 py-2 rounded-xl text-sm border dark:border-white/10 border-black/10" data-genre="Ужасы" onclick="toggleGenre(this)">Ужасы</div>
+                            <div class="multi-select-option px-4 py-2 rounded-xl text-sm border dark:border-white/10 border-black/10" data-genre="Мелодрама" onclick="toggleGenre(this)">Мелодрама</div>
+                            <div class="multi-select-option px-4 py-2 rounded-xl text-sm border dark:border-white/10 border-black/10" data-genre="Анимация" onclick="toggleGenre(this)">Анимация</div>
+                            <div class="multi-select-option px-4 py-2 rounded-xl text-sm border dark:border-white/10 border-black/10" data-genre="Документальный" onclick="toggleGenre(this)">Документальный</div>
+                            <div class="multi-select-option px-4 py-2 rounded-xl text-sm border dark:border-white/10 border-black/10" data-genre="Мультфильм" onclick="toggleGenre(this)">Мультфильм</div>
+                        </div>
+                    </div>
+
+                    <!-- Actors -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="actors">Актёры</h3>
+                        <div class="space-y-4">
+                            <!-- Actor Input Section -->
+                            <div class="flex flex-col sm:flex-row gap-3 items-end">
+                                <div class="flex-1">
+                                    <label class="block text-xs font-medium mb-2 opacity-60">Имя актёра</label>
+                                    <input type="text" id="actorInput" class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="Введите имя актёра..." onkeydown="if(event.key==='Enter'){event.preventDefault();addActor();}">
+                                </div>
+                                <div class="w-32">
+                                    <label class="block text-xs font-medium mb-2 opacity-60">Фото актера</label>
+                                    <div class="relative">
+                                        <input type="file" id="actorPhotoInput" accept="image/*" class="hidden" onchange="previewActorPhoto(this)">
+                                        <button type="button" onclick="document.getElementById('actorPhotoInput').click()" class="w-full px-4 py-3 rounded-xl text-sm border dark:border-white/10 border-black/10 hover:border-indigo-500/50 transition-colors flex items-center justify-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            <span>Выбрать</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="addActor()" class="btn-primary px-6 py-3 rounded-xl text-white text-sm font-medium whitespace-nowrap" data-i18n="add_actor">+ Добавить</button>
+                            </div>
+                            
+                            <!-- Actor Photo Preview -->
+                            <div id="actorPhotoPreview" class="hidden">
+                                <div class="flex items-center gap-3 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/30">
+                                    <img id="previewImg" src="" alt="Actor" class="w-12 h-12 rounded-lg object-cover">
+                                    <div class="flex-1">
+                                        <p class="text-xs font-medium" id="previewName">Фото выбрано</p>
+                                        <p class="text-xs opacity-60" id="previewSize"></p>
+                                    </div>
+                                    <button type="button" onclick="clearActorPhoto()" class="p-2 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Actors Gallery -->
+                        <div id="actorsGallery" class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="description">Описание</h3>
+                        <textarea name="movieDescription" rows="4" class="input-field w-full px-4 py-3 rounded-xl text-sm resize-none" placeholder="Введите описание фильма..." data-i18n-placeholder="description_placeholder"></textarea>
+                    </div>
+
+                    <!-- Subscription Toggle -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4">Доступ</h3>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="movieSubscription" class="w-5 h-5 rounded accent-indigo-500">
+                            <span class="text-sm">Только по подписке</span>
+                        </label>
+                    </div>
+
+                    <!-- Stream URL -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="stream_url">Ссылка на фильм</h3>
+                        <input type="url" name="movieStreamUrl" class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="https://example.com/video.mp4">
+                    </div>
+
+
+                    <!-- Trailer URL -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4">Ссылка на трейлер</h3>
+                        <input type="url" name="movieTrailerUrl" class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="https://youtube.com/watch?v=...">
+                    </div>
+
+
+
+
+
+
+                    <!-- Submit -->
+                    <button type="submit" id="movieSubmitBtn" class="btn-primary w-full py-4 rounded-2xl text-white font-semibold text-lg flex items-center justify-center gap-2">
+                        <span id="movieBtnText" data-i18n="submit_movie">Добавить фильм</span>
+                        <div id="movieBtnSpinner" class="loading-spinner hidden"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- ===== ADD TV PAGE ===== -->
+            <div id="page-add-tv" class="page-transition hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold" data-i18n="add_tv_title">Добавить ТВ-канал</h2>
+                    <p class="opacity-50 mt-1" data-i18n="add_tv_subtitle">Заполните информацию о канале</p>
+                </div>
+
+                <form id="tvForm" onsubmit="return addChannel(event)" class="max-w-4xl space-y-6">
+                    <!-- Logo Upload -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="channel_logo">Логотип канала</h3>
+                        <div id="tvDropZone" class="drop-zone border-2 border-dashed rounded-xl p-8 text-center cursor-pointer" onclick="document.getElementById('tvLogoInput').click()">
+                            <input type="file" id="tvLogoInput" accept="image/*" class="hidden" onchange="handlePosterUpload(this, 'tv')">
+                            <input type="hidden" name="channelLogo" id="tvLogoInputHidden" value="">
+                            <div id="tvPosterPreview" class="hidden mb-4">
+                                <img id="tvPosterImg" class="mx-auto max-h-40 rounded-xl shadow-lg" alt="Logo">
+                            </div>
+                            <div id="tvDropContent">
+                                <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <p class="text-sm font-medium" data-i18n="drag_drop">Перетащите изображение сюда</p>
+                                <p class="text-xs opacity-40 mt-1" data-i18n="or_click">или нажмите для выбора</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Channel Info -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="channel_info">Информация о канале</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2" data-i18n="channel_name">Название канала *</label>
+                                <input type="text" name="channelName" required class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="HBO, Discovery...">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2" data-i18n="channel_category">Категория *</label>
+                                <select name="channelCategory" required class="input-field w-full px-4 py-3 rounded-xl text-sm">
+                                    <option value="" data-i18n="select_category">Выберите категорию</option>
+                                    <option value="Новости" data-i18n="cat_news">Новости</option>
+                                    <option value="Спорт" data-i18n="cat_sport">Спорт</option>
+                                    <option value="Развлечения" data-i18n="cat_entertainment">Развлечения</option>
+                                    <option value="Кино" data-i18n="cat_movies">Кино</option>
+                                    <option value="Музыка" data-i18n="cat_music">Музыка</option>
+                                    <option value="Дети" data-i18n="cat_kids">Дети</option>
+                                    <option value="Документальный" data-i18n="cat_documentary">Документальный</option>
+                                    <option value="Музыка" data-i18n="cat_music">Музыка</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2" data-i18n="channel_quality">Качество</label>
+                                <select name="channelQuality" class="input-field w-full px-4 py-3 rounded-xl text-sm">
+                                    <option value="720p">720p HD</option>
+                                    <option value="1080p">1080p Full HD</option>
+                                    <option value="4K">4K Ultra HD</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2" data-i18n="stream_url">Ссылка на трансляцию *</label>
+                                <input type="url" name="streamUrl" required class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="https://example.com/stream.m3u8">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4" data-i18n="channel_description">Описание канала</h3>
+                        <textarea name="channelDescription" rows="3" class="input-field w-full px-4 py-3 rounded-xl text-sm resize-none" placeholder="Короткое описание канала..."></textarea>
+                    </div>
+
+                    <!-- subscription -->
+                    <div class="glass-card rounded-2xl p-5 md:p-6">
+                        <h3 class="text-lg font-semibold mb-4">Доступ</h3>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="channelSubscription" class="w-5 h-5 rounded accent-indigo-500">
+                            <span class="text-sm">Только по подписке</span>
+                        </label>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" id="tvSubmitBtn" class="btn-primary w-full py-4 rounded-2xl text-white font-semibold text-lg flex items-center justify-center gap-2">
+                        <span id="tvBtnText" data-i18n="submit_channel">Добавить канал</span>
+                        <div id="tvBtnSpinner" class="loading-spinner hidden"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- ===== MOVIES LIST PAGE ===== -->
+            <div id="page-movies-list" class="page-transition hidden">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-bold" data-i18n="movies_list_title">Список фильмов</h2>
+                        <p class="opacity-50 mt-1" data-i18n="movies_list_subtitle">Управление коллекцией фильмов</p>
+                    </div>
+                    <button onclick="navigateTo('add-movie')" class="btn-primary px-5 py-3 rounded-xl text-white text-sm font-medium flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        <span data-i18n="add_movie">Добавить фильм</span>
+                    </button>
+                </div>
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b dark:border-white/5 border-black/5">
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40" data-i18n="th_poster">Постер</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40" data-i18n="th_name">Название</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40 hidden md:table-cell" data-i18n="th_year">Год</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40 hidden lg:table-cell" data-i18n="th_genre">Жанр</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40 hidden md:table-cell" data-i18n="th_rating">Рейтинг</th>
+                                    <th class="text-right px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40" data-i18n="th_actions">Действия</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40" data-i18n="is_subscription">Подписка</th>
+                                </tr>
+                            </thead>
+                            <tbody id="moviesTableBody">
+                                <tr><td colspan="7" class="px-6 py-12 text-center opacity-40 text-sm" data-i18n="no_movies_yet">Пока нет фильмов</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TV LIST PAGE ===== -->
+            <div id="page-tv-list" class="page-transition hidden">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-bold" data-i18n="tv_list_title">Список ТВ-каналов</h2>
+                        <p class="opacity-50 mt-1" data-i18n="tv_list_subtitle">Управление коллекцией каналов</p>
+                    </div>
+                    <button onclick="navigateTo('add-tv')" class="btn-primary px-5 py-3 rounded-xl text-white text-sm font-medium flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        <span data-i18n="add_channel">Добавить канал</span>
+                    </button>
+                </div>
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b dark:border-white/5 border-black/5">
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40" data-i18n="th_logo">Логотип</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40" data-i18n="th_channel_name">Название</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40 hidden md:table-cell" data-i18n="th_category">Категория</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40 hidden md:table-cell" data-i18n="th_quality">Качество</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40">Подписка</th>
+                                    <th class="text-right px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40" data-i18n="th_actions">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tvTableBody">
+                                <tr><td colspan="6" class="px-6 py-12 text-center opacity-40 text-sm" data-i18n="no_channels_yet">Пока нет каналов</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== USERS LIST PAGE ===== -->
+            <div id="page-users-list" class="page-transition hidden">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-bold" data-i18n="users_list_title">Пользователи</h2>
+                        <p class="opacity-50 mt-1" data-i18n="users_list_subtitle">Управление зарегистрированными пользователями</p>
+                    </div>
+                </div>
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b dark:border-white/5 border-black/5">
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40" data-i18n="th_user_id">ID</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40" data-i18n="th_username">Имя пользователя</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40 hidden md:table-cell" data-i18n="th_email">Email</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40 hidden lg:table-cell" data-i18n="th_created_at">Дата регистрации</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Подписка</th>
+                                    <th class="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40" data-i18n="th_status">Статус</th>
+                                    <th class="text-right px-6 py-4 text-xs font-semibold uppercase tracking-wider opacity-40" data-i18n="th_actions">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr><td colspan="5" class="px-6 py-12 text-center opacity-40 text-sm" data-i18n="no_users_yet">Пока нет пользователей</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== SUBSCRIPTIONS MANAGEMENT PAGE ===== -->
+            <div id="page-subscriptions" class="page-transition hidden">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-bold" data-i18n="subscriptions_title">Управление подписками</h2>
+                        <p class="opacity-50 mt-1" data-i18n="subscriptions_subtitle">Настройка планов и стоимости подписок</p>
+                    </div>
+                    <button onclick="saveSubscriptions()" class="btn-primary px-6 py-3 rounded-xl text-sm font-medium text-white flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Сохранить изменения
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <!-- Plan 1: 1 Месяц -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">1 Месяц</h3>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">Базовый</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Стоимость (UZS)</label>
+                                <input type="number" id="plan1_price" class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="29000">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Качество</label>
+                                <select id="plan1_quality" class="input-field w-full px-4 py-3 rounded-xl text-sm">
+                                    <option value="HD">HD</option>
+                                    <option value="Full HD">Full HD</option>
+                                    <option value="4K">4K</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Количество устройств</label>
+                                <input type="number" id="plan1_devices" class="input-field w-full px-4 py-3 rounded-xl text-sm" min="1" max="10" placeholder="1">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Архив (дней)</label>
+                                <input type="number" id="plan1_archive" class="input-field w-full px-4 py-3 rounded-xl text-sm" min="1" max="365" placeholder="7">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plan 2: 3 Месяца (Popular) -->
+                    <div class="glass-card rounded-2xl p-6 border-2 border-indigo-500/30 relative">
+                        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                            <span class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-1 rounded-full text-xs font-medium">Популярный</span>
+                        </div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">3 Месяца</h3>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Экономия</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Стоимость (UZS)</label>
+                                <input type="number" id="plan2_price" class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="74000">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Качество</label>
+                                <select id="plan2_quality" class="input-field w-full px-4 py-3 rounded-xl text-sm">
+                                    <option value="HD">HD</option>
+                                    <option value="Full HD">Full HD</option>
+                                    <option value="4K">4K</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Количество устройств</label>
+                                <input type="number" id="plan2_devices" class="input-field w-full px-4 py-3 rounded-xl text-sm" min="1" max="10" placeholder="2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Архив (дней)</label>
+                                <input type="number" id="plan2_archive" class="input-field w-full px-4 py-3 rounded-xl text-sm" min="1" max="365" placeholder="14">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Скидка (%)</label>
+                                <input type="number" id="plan2_discount" class="input-field w-full px-4 py-3 rounded-xl text-sm" min="0" max="100" placeholder="15">
+                            </div>
+                            <div>
+                                <label class="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" id="plan2_popular" class="rounded">
+                                    <span>Популярный тариф</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plan 3: 12 Месяцев -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">12 Месяцев</h3>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">Максимальная экономия</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Стоимость (UZS)</label>
+                                <input type="number" id="plan3_price" class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="199000">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Качество</label>
+                                <select id="plan3_quality" class="input-field w-full px-4 py-3 rounded-xl text-sm">
+                                    <option value="HD">HD</option>
+                                    <option value="Full HD">Full HD</option>
+                                    <option value="4K">4K</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Количество устройств</label>
+                                <input type="number" id="plan3_devices" class="input-field w-full px-4 py-3 rounded-xl text-sm" min="1" max="10" placeholder="4">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Архив (дней)</label>
+                                <input type="number" id="plan3_archive" class="input-field w-full px-4 py-3 rounded-xl text-sm" min="1" max="365" placeholder="30">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Скидка (%)</label>
+                                <input type="number" id="plan3_discount" class="input-field w-full px-4 py-3 rounded-xl text-sm" min="0" max="100" placeholder="30">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Settings -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Дополнительные настройки</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Пробный период (дни)</label>
+                            <input type="number" id="trialDays" class="input-field w-full px-4 py-3 rounded-xl text-sm" placeholder="7" value="7" min="0" max="30">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Валюта</label>
+                            <select id="currency" class="input-field w-full px-4 py-3 rounded-xl text-sm">
+                                <option value="UZS" selected>UZS (Узбекский сум)</option>
+                                <option value="USD">USD (Доллар США)</option>
+                                <option value="RUB">RUB (Российский рубль)</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" id="autoRenewal" class="rounded" checked>
+                                <span>Разрешить автоматическое продление подписок</span>
+                            </label>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" id="notifications" class="rounded" checked>
+                                <span>Отправлять уведомления об окончании подписки</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+
+
+            </div>
+
+
+            <!-- ===== REFERRAL PROGRAM PAGE ===== -->
+            <div id="page-referral" class="page-transition hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold">Реферальная программа</h2>
+                    <p class="opacity-50 mt-1">Настройка реферальной системы и вознаграждений</p>
+                </div>
+
+                <!-- Referral Settings -->
+                <div class="glass-card rounded-2xl p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-6">Настройки вознаграждения</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Процент вознаграждения (%)</label>
+                            <input type="number" id="referralPercent" class="input-field w-full px-4 py-3 rounded-xl text-sm" 
+                                min="0" max="100" placeholder="10" value="10">
+                            <p class="text-xs opacity-40 mt-1">Процент от суммы подписки, который получает пригласивший</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Бонусные дни за реферала</label>
+                            <input type="number" id="referralBonusDays" class="input-field w-full px-4 py-3 rounded-xl text-sm" 
+                                min="0" max="365" placeholder="3" value="3">
+                            <p class="text-xs opacity-40 mt-1">Дополнительные дни подписки пригласившему</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Пример расчёта -->
+                <div class="glass-card rounded-2xl p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Пример расчёта</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-indigo-500/10">
+                            <span>Подписка "1 Месяц" — 29 000 сум</span>
+                            <span class="font-semibold text-green-400" id="examplePlan1">+2 900 сум</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-indigo-500/10">
+                            <span>Подписка "3 Месяца" — 74 000 сум</span>
+                            <span class="font-semibold text-green-400" id="examplePlan2">+7 400 сум</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-indigo-500/10">
+                            <span>Подписка "12 Месяцев" — 199 000 сум</span>
+                            <span class="font-semibold text-green-400" id="examplePlan3">+19 900 сум</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Статистика -->
+                <div class="glass-card rounded-2xl p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Статистика рефералов</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-xl bg-indigo-500/10 text-center">
+                            <p class="text-2xl font-bold text-indigo-400" id="statReferralUsers">0</p>
+                            <p class="text-xs opacity-40 mt-1">Пользователей приглашено</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-green-500/10 text-center">
+                            <p class="text-2xl font-bold text-green-400" id="statReferralEarnings">0 сум</p>
+                            <p class="text-xs opacity-40 mt-1">Всего выплачено</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-amber-500/10 text-center">
+                            <p class="text-2xl font-bold text-amber-400" id="statReferralActive">0</p>
+                            <p class="text-xs opacity-40 mt-1">Активных рефералов</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Кнопка сохранения -->
+                <button onclick="saveReferralSettings()" class="btn-primary w-full py-4 rounded-2xl text-white font-semibold text-lg flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Сохранить настройки
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+
+    <script>
+    // ===== TRANSLATIONS =====
+    const translations = {
+        ru: {
+            sidebar_version: 'v2.0.0',
+            nav_dashboard: 'Dashboard',
+            nav_add_movie: 'Добавить фильм',
+            nav_add_tv: 'Добавить ТВ-канал',
+            nav_lists: 'Списки',
+            nav_movies_list: 'Фильмы',
+            nav_tv_list: 'ТВ-каналы',
+            nav_logout: 'Выйти',
+            theme_light: 'Светлая тема',
+            theme_dark: 'Тёмная тема',
+            search_placeholder: 'Поиск...',
+            notifications: 'Уведомления',
+            dashboard_title: 'Панель управления',
+            dashboard_subtitle: 'Обзор вашего стримингового сервиса',
+            stat_total_movies: 'Всего фильмов',
+            stat_total_channels: 'Всего ТВ-каналов',
+            stat_added_today: 'Добавлено сегодня',
+            stat_views: 'Просмотры',
+            recent_movies: 'Последние фильмы',
+            recent_channels: 'Последние ТВ-каналы',
+            no_movies_yet: 'Пока нет фильмов',
+            no_channels_yet: 'Пока нет каналов',
+            add_movie_title: 'Добавить фильм',
+            add_movie_subtitle: 'Заполните информацию о фильме',
+            poster_title: 'Постер',
+            drag_drop: 'Перетащите изображение сюда',
+            or_click: 'или нажмите для выбора',
+            basic_info: 'Основная информация',
+            movie_name: 'Название фильма *',
+            movie_year: 'Год выпуска *',
+            movie_duration: 'Продолжительность (мин.)',
+            movie_rating: 'Рейтинг (IMDb)',
+            genres: 'Жанры',
+            actors: 'Актёры',
+            add_actor: '+ Добавить',
+            actor_name: 'Имя актёра',
+            actor_photo: 'Фото актера',
+            actor_select: 'Выбрать фото',
+            description: 'Описание',
+            description_placeholder: 'Введите описание фильма...',
+            submit_movie: 'Добавить фильм',
+            add_tv_title: 'Добавить ТВ-канал',
+            add_tv_subtitle: 'Заполните информацию о канале',
+            channel_logo: 'Логотип канала',
+            channel_info: 'Информация о канале',
+            channel_name: 'Название канала *',
+            channel_category: 'Категория *',
+            select_category: 'Выберите категорию',
+            cat_news: 'Новости',
+            cat_sport: 'Спорт',
+            cat_entertainment: 'Развлечения',
+            cat_movies: 'Кино',
+            cat_music: 'Музыка',
+            cat_kids: 'Дети',
+            cat_documentary: 'Документальный',
+            channel_quality: 'Качество',
+            stream_url: 'Ссылка на трансляцию *',
+            channel_description: 'Описание канала',
+            submit_channel: 'Добавить канал',
+            movies_list_title: 'Список фильмов',
+            movies_list_subtitle: 'Управление коллекцией фильмов',
+            add_movie: 'Добавить фильм',
+            tv_list_title: 'Список ТВ-каналов',
+            tv_list_subtitle: 'Управление коллекцией каналов',
+            add_channel: 'Добавить канал',
+            th_poster: 'Постер',
+            th_name: 'Название',
+            th_year: 'Год',
+            th_genre: 'Жанр',
+            th_rating: 'Рейтинг',
+            th_actions: 'Действия',
+            th_logo: 'Логотип',
+            th_channel_name: 'Название',
+            th_category: 'Категория',
+            th_quality: 'Качество',
+            toast_movie_added: 'Фильм успешно добавлен!',
+            toast_channel_added: 'Канал успешно добавлен!',
+            toast_deleted: 'Успешно удалено!',
+            toast_fill_fields: 'Заполните все обязательные поля!',
+            edit: 'Редактировать',
+            delete: 'Удалить',
+            delete_confirm: 'Вы уверены, что хотите удалить?',
+            nav_users_list: 'Пользователи',
+            users_list_title: 'Пользователи',
+            users_list_subtitle: 'Управление зарегистрированными пользователями',
+            no_users_yet: 'Пока нет пользователей',
+            th_user_id: 'ID',
+            th_username: 'Имя пользователя',
+            th_email: 'Email',
+            th_created_at: 'Дата регистрации',
+            th_status: 'Статус',
+            active: 'Активен',
+            inactive: 'Неактивен'
+        },
+        en: {
+            sidebar_version: 'v2.0.0',
+            nav_dashboard: 'Dashboard',
+            nav_add_movie: 'Add Movie',
+            nav_add_tv: 'Add TV Channel',
+            nav_lists: 'Lists',
+            nav_movies_list: 'Movies',
+            nav_tv_list: 'TV Channels',
+            nav_logout: 'Logout',
+            theme_light: 'Light theme',
+            theme_dark: 'Dark theme',
+            search_placeholder: 'Search...',
+            notifications: 'Notifications',
+            dashboard_title: 'Dashboard',
+            dashboard_subtitle: 'Overview of your streaming service',
+            stat_total_movies: 'Total Movies',
+            stat_total_channels: 'Total TV Channels',
+            stat_added_today: 'Added Today',
+            stat_views: 'Views',
+            recent_movies: 'Recent Movies',
+            recent_channels: 'Recent Channels',
+            no_movies_yet: 'No movies yet',
+            no_channels_yet: 'No channels yet',
+            add_movie_title: 'Add Movie',
+            add_movie_subtitle: 'Fill in the movie information',
+            poster_title: 'Poster',
+            drag_drop: 'Drag & drop image here',
+            or_click: 'or click to select',
+            basic_info: 'Basic Information',
+            movie_name: 'Movie Name *',
+            movie_year: 'Release Year *',
+            movie_duration: 'Duration (min.)',
+            movie_rating: 'Rating (IMDb)',
+            genres: 'Genres',
+            actors: 'Actors',
+            add_actor: '+ Add',
+            actor_name: 'Actor Name',
+            actor_photo: 'Actor Photo',
+            actor_select: 'Select Photo',
+            description: 'Description',
+            description_placeholder: 'Enter movie description...',
+            submit_movie: 'Add Movie',
+            add_tv_title: 'Add TV Channel',
+            add_tv_subtitle: 'Fill in the channel information',
+            channel_logo: 'Channel Logo',
+            channel_info: 'Channel Information',
+            channel_name: 'Channel Name *',
+            channel_category: 'Category *',
+            select_category: 'Select category',
+            cat_news: 'News',
+            cat_sport: 'Sports',
+            cat_entertainment: 'Entertainment',
+            cat_movies: 'Movies',
+            cat_music: 'Music',
+            cat_kids: 'Kids',
+            cat_documentary: 'Documentary',
+            channel_quality: 'Quality',
+            stream_url: 'Stream URL *',
+            channel_description: 'Channel Description',
+            submit_channel: 'Add Channel',
+            movies_list_title: 'Movies List',
+            movies_list_subtitle: 'Manage your movie collection',
+            add_movie: 'Add Movie',
+            tv_list_title: 'TV Channels List',
+            tv_list_subtitle: 'Manage your channel collection',
+            add_channel: 'Add Channel',
+            th_poster: 'Poster',
+            th_name: 'Name',
+            th_year: 'Year',
+            th_genre: 'Genre',
+            th_rating: 'Rating',
+            th_actions: 'Actions',
+            th_logo: 'Logo',
+            th_channel_name: 'Name',
+            th_category: 'Category',
+            th_quality: 'Quality',
+            toast_movie_added: 'Movie added successfully!',
+            toast_channel_added: 'Channel added successfully!',
+            toast_deleted: 'Successfully deleted!',
+            toast_fill_fields: 'Please fill in all required fields!',
+            edit: 'Edit',
+            delete: 'Delete',
+            delete_confirm: 'Are you sure you want to delete?',
+            nav_users_list: 'Users',
+            users_list_title: 'Users',
+            users_list_subtitle: 'Manage registered users',
+            no_users_yet: 'No users yet',
+            th_user_id: 'ID',
+            th_username: 'Username',
+            th_email: 'Email',
+            th_created_at: 'Registration Date',
+            th_status: 'Status',
+            active: 'Active',
+            inactive: 'Inactive'
+        },
+        es: {
+            sidebar_version: 'v2.0.0',
+            nav_dashboard: 'Panel de Control',
+            nav_add_movie: 'Añadir Película',
+            nav_add_tv: 'Añadir Canal de TV',
+            nav_lists: 'Listas',
+            nav_movies_list: 'Películas',
+            nav_tv_list: 'Canales de TV',
+            nav_logout: 'Cerrar sesión',
+            theme_light: 'Tema claro',
+            theme_dark: 'Tema oscuro',
+            search_placeholder: 'Buscar...',
+            notifications: 'Notificaciones',
+            dashboard_title: 'Panel de Control',
+            dashboard_subtitle: 'Resumen de tu servicio de streaming',
+            stat_total_movies: 'Total de Películas',
+            stat_total_channels: 'Total de Canales de TV',
+            stat_added_today: 'Añadido Hoy',
+            stat_views: 'Visualizaciones',
+            recent_movies: 'Películas Recientes',
+            recent_channels: 'Canales Recientes',
+            no_movies_yet: 'Aún no hay películas',
+            no_channels_yet: 'Aún no hay canales',
+            add_movie_title: 'Añadir Película',
+            add_movie_subtitle: 'Complete la información de la película',
+            poster_title: 'Póster',
+            drag_drop: 'Arrastra y suelta imagen aquí',
+            or_click: 'o haz clic para seleccionar',
+            basic_info: 'Información Básica',
+            movie_name: 'Nombre de la Película *',
+            movie_year: 'Año de Estreno *',
+            movie_duration: 'Duración (min.)',
+            movie_rating: 'Calificación (IMDb)',
+            genres: 'Géneros',
+            actors: 'Actores',
+            add_actor: '+ Añadir',
+            actor_name: 'Nombre del Actor',
+            actor_photo: 'Foto del Actor',
+            actor_select: 'Seleccionar Foto',
+            description: 'Descripción',
+            description_placeholder: 'Ingrese la descripción de la película...',
+            submit_movie: 'Añadir Película',
+            add_tv_title: 'Añadir Canal de TV',
+            add_tv_subtitle: 'Complete la información del canal',
+            channel_logo: 'Logo del Canal',
+            channel_info: 'Información del Canal',
+            channel_name: 'Nombre del Canal *',
+            channel_category: 'Categoría *',
+            select_category: 'Seleccionar categoría',
+            cat_news: 'Noticias',
+            cat_sport: 'Deportes',
+            cat_entertainment: 'Entretenimiento',
+            cat_movies: 'Cine',
+            cat_music: 'Música',
+            cat_kids: 'Infantil',
+            cat_documentary: 'Documental',
+            channel_quality: 'Calidad',
+            stream_url: 'URL de Transmisión *',
+            channel_description: 'Descripción del Canal',
+            submit_channel: 'Añadir Canal',
+            movies_list_title: 'Lista de Películas',
+            movies_list_subtitle: 'Gestiona tu colección de películas',
+            add_movie: 'Añadir Película',
+            tv_list_title: 'Lista de Canales de TV',
+            tv_list_subtitle: 'Gestiona tu colección de canales',
+            add_channel: 'Añadir Canal',
+            th_poster: 'Póster',
+            th_name: 'Nombre',
+            th_year: 'Año',
+            th_genre: 'Género',
+            th_rating: 'Calificación',
+            th_actions: 'Acciones',
+            th_logo: 'Logo',
+            th_channel_name: 'Nombre',
+            th_category: 'Categoría',
+            th_quality: 'Calidad',
+            toast_movie_added: '¡Película añadida con éxito!',
+            toast_channel_added: '¡Canal añadido con éxito!',
+            toast_deleted: '¡Eliminado con éxito!',
+            toast_fill_fields: '¡Por favor, complete todos los campos obligatorios!',
+            edit: 'Editar',
+            delete: 'Eliminar',
+            delete_confirm: '¿Estás seguro de que quieres eliminar?',
+            is_subscription: 'Suscripción',
+            nav_users_list: 'Usuarios',
+            users_list_title: 'Usuarios',
+            users_list_subtitle: 'Gestión de usuarios registrados',
+            no_users_yet: 'Aún no hay usuarios',
+            th_user_id: 'ID',
+            th_username: 'Nombre de usuario',
+            th_email: 'Email',
+            th_created_at: 'Fecha de registro',
+            th_status: 'Estado',
+            active: 'Activo',
+            inactive: 'Inactivo'
+        }
+    };
+
+    // ===== STATE =====
+    let currentLang = 'ru';
+    let currentTheme = 'dark';
+    let currentPage = 'dashboard';
+    let movies = [];
+    let channels = [];
+    let users = [];
+    let actorsList = [];
+    let selectedGenres = [];
+    let todayCount = 0;
+    let currentActorPhoto = null; // Для хранения фото текущего актера
+
+    async function loadMovies() {
+        const res = await fetch('/api/movies');
+        movies = await res.json();
+        renderMoviesTable();
+        updateUI();
+    }
+    
+    async function loadChannels() {
+        const res = await fetch('/api/channels');
+        channels = await res.json();
+        renderTvTable();
+    }
+
+    async function loadUsers() {
+        const res = await fetch('/api/users');
+        users = await res.json();
+        renderUsersTable();
+        updateUI();
+    }
+
+    async function addMovie(event) {
+            event.preventDefault();
+            
+            const form = document.getElementById('movieForm');
+            const formData = new FormData(form);
+            
+            const movieData = {
+                name: formData.get('movieName') || '',
+                year: formData.get('movieYear') || '',
+                duration: formData.get('movieDuration') || '',
+                rating: formData.get('movieRating') || '',
+                description: formData.get('movieDescription') || '',
+                poster: formData.get('moviePoster') || '',
+                stream_url: formData.get('movieStreamUrl') || '',
+                trailer_url: formData.get('movieTrailerUrl') || '',
+                language: formData.get('movieLanguage') || '',
+                genres: selectedGenres,
+                actors: actorsList.map(actor => ({
+                    name: actor.name,
+                    photo: actor.photo
+                })),
+                is_subscription: formData.get('movieSubscription') === 'on'
+            };
+            
+            try {
+                const result = await addMovieAPI(movieData);
+                showToast('toast_movie_added', 'success');
+                form.reset();
+                actorsList = [];
+                renderActors();
+                selectedGenres = [];
+                document.querySelectorAll('.multi-select-option').forEach(el => el.classList.remove('selected'));
+                await loadMovies();
+            } catch (error) {
+                showToast('error', 'error');
+            }
+            
+            return false;
+    }
+
+
+    async function addMovieAPI(movieData) {
+        const res = await fetch('/api/movies', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(movieData)
+        });
+        return await res.json();
+    }
+    
+
+    
+    async function addChannelAPI(channelData) {
+        await fetch('/api/channels', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(channelData)
+        });
+    }
+    
+    async function deleteMovieAPI(id) {
+        await fetch(`/api/movies/${id}`, {method: 'DELETE'});
+    }
+    
+    async function deleteChannelAPI(id) {
+        await fetch(`/api/channels/${id}`, {method: 'DELETE'});
+    }
+    
+    async function deleteUserAPI(id) {
+        await fetch(`/api/users/${id}`, {method: 'DELETE'});
+    }
+
+
+
+
+
+    // ===== INITIALIZATION =====
+    document.addEventListener('DOMContentLoaded', async () => {
+        initSidebar();
+        initDropZones();
+        await loadMovies();
+        await loadChannels();
+        await loadUsers();
+        navigateTo('dashboard');
+    });
+
+    // ===== NAVIGATION =====
+    function navigateTo(page) {
+        currentPage = page;
+        // Hide all pages
+        document.querySelectorAll('[id^="page-"]').forEach(el => el.classList.add('hidden'));
+        // Show target page
+        const target = document.getElementById('page-' + page);
+        if (target) {
+            target.classList.remove('hidden');
+            target.classList.remove('page-transition');
+            void target.offsetWidth; // force reflow
+            target.classList.add('page-transition');
+        }
+        // Update nav items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.page === page);
+        });
+        // Close sidebar on mobile
+        if (window.innerWidth < 768) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.add('hidden');
+        }
+        // Update lists if navigating to list pages
+        if (page === 'movies-list') renderMoviesTable();
+        if (page === 'tv-list') renderTvTable();
+        if (page === 'users-list') renderUsersTable();
+        if (page === 'dashboard') updateDashboard();
+        // Добавить вызов в navigateTo:
+        if (page === 'referral') loadReferralSettings();
+    }
+
+    // ===== SIDEBAR =====
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('hidden');
+    }
+    function initSidebar() {
+        if (window.innerWidth >= 768) {
+            document.getElementById('sidebar').classList.remove('open');
+        }
+    }
+
+    // ===== LANGUAGE =====
+    function setLanguage(lang) {
+        currentLang = lang;
+        document.getElementById('sidebarOverlay').classList.add('hidden');
+        const flags = { ru: '🇷🇺', en: '🇬🇧', es: '🇪🇸' };
+        const codes = { ru: 'RU', en: 'EN', es: 'ES' };
+        document.getElementById('currentLangFlag').textContent = flags[lang];
+        document.getElementById('currentLangCode').textContent = codes[lang];
+        document.getElementById('langMenu').classList.add('hidden');
+        applyTranslations();
+        updateDashboard();
+        renderMoviesTable();
+        renderTvTable();
+        renderUsersTable();
+    }
+    function toggleLangMenu() {
+        document.getElementById('langMenu').classList.toggle('hidden');
+        document.getElementById('notifPanel').classList.add('hidden');
+    }
+    function applyTranslations() {
+        const t = translations[currentLang];
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.dataset.i18n;
+            if (t[key]) el.textContent = t[key];
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.dataset.i18nPlaceholder;
+            if (t[key]) el.placeholder = t[key];
+        });
+    }
+
+    // ===== NOTIFICATIONS =====
+    function toggleNotifications() {
+        document.getElementById('notifPanel').classList.toggle('hidden');
+        document.getElementById('langMenu').classList.add('hidden');
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#langBtn') && !e.target.closest('#langMenu')) {
+            document.getElementById('langMenu').classList.add('hidden');
+        }
+        if (!e.target.closest('[onclick="toggleNotifications()"]') && !e.target.closest('#notifPanel')) {
+            document.getElementById('notifPanel').classList.add('hidden');
+        }
+    });
+
+    // ===== THEME =====
+    function toggleTheme() {
+        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        updateThemeUI();
+    }
+    function updateThemeUI() {
+        const t = translations[currentLang];
+        document.getElementById('themeLabel').textContent = currentTheme === 'dark' ? t.theme_light : t.theme_dark;
+        const icon = document.getElementById('themeIcon');
+        if (currentTheme === 'dark') {
+            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>';
+        } else {
+            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>';
+        }
+    }
+
+    // ===== DRAG & DROP =====
+    function initDropZones() {
+        ['movieDropZone', 'tvDropZone'].forEach(id => {
+            const zone = document.getElementById(id);
+            zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const type = id === 'movieDropZone' ? 'movie' : 'tv';
+                const input = document.getElementById(type === 'movie' ? 'moviePosterInput' : 'tvLogoInput');
+                const dt = e.dataTransfer;
+                if (dt.files.length) {
+                    input.files = dt.files;
+                    handlePosterUpload(input, type);
+                }
+            });
+        });
+    }
+
+    function handlePosterUpload(input, type) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const previewId = type === 'movie' ? 'moviePosterPreview' : 'tvPosterPreview';
+            const imgId = type === 'movie' ? 'moviePosterImg' : 'tvPosterImg';
+            const contentId = type === 'movie' ? 'movieDropContent' : 'tvDropContent';
+            document.getElementById(imgId).src = e.target.result;
+            document.getElementById(previewId).classList.remove('hidden');
+            document.getElementById(contentId).classList.add('hidden');
+            
+            const hiddenInputId = type === 'movie' ? 'moviePosterInputHidden' : 'tvLogoInputHidden';
+            document.getElementById(hiddenInputId).value = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ===== GENRES =====
+    function toggleGenre(el) {
+        const genre = el.dataset.genre;
+        el.classList.toggle('selected');
+        if (el.classList.contains('selected')) {
+            if (!selectedGenres.includes(genre)) selectedGenres.push(genre);
+        } else {
+            selectedGenres = selectedGenres.filter(g => g !== genre);
+        }
+    }
+
+    // ===== ACTORS =====
+    function previewActorPhoto(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            currentActorPhoto = e.target.result;
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('previewName').textContent = file.name;
+            document.getElementById('previewSize').textContent = (file.size / 1024).toFixed(0) + ' KB';
+            document.getElementById('actorPhotoPreview').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    function clearActorPhoto() {
+        currentActorPhoto = null;
+        document.getElementById('actorPhotoInput').value = '';
+        document.getElementById('actorPhotoPreview').classList.add('hidden');
+    }
+    
+    function addActor() {
+        const input = document.getElementById('actorInput');
+        const name = input.value.trim();
+        
+        if (!name) {
+            showToast('Введите имя актёра', 'error');
+            return;
+        }
+        
+        if (actorsList.some(a => a.name === name)) {
+            showToast('Этот актер уже добавлен', 'error');
+            return;
+        }
+        
+        const actor = {
+            name: name,
+            photo: currentActorPhoto || null
+        };
+        
+        actorsList.push(actor);
+        input.value = '';
+        clearActorPhoto();
+        renderActors();
+    }
+    
+    function removeActor(name) {
+        actorsList = actorsList.filter(a => a.name !== name);
+        renderActors();
+    }
+    
+    function renderActors() {
+        const container = document.getElementById('actorsGallery');
+        
+        if (actorsList.length === 0) {
+            container.innerHTML = '<p class="col-span-full text-sm opacity-40 text-center py-8">Актеры еще не добавлены</p>';
+            return;
+        }
+        
+        container.innerHTML = actorsList.map((actor, idx) => `
+            <div class="chip group relative flex flex-col items-center p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 hover:border-indigo-500/60 transition-all">
+                <!-- Delete Button -->
+                <button type="button" 
+                    onclick="removeActor('${actor.name.replace(/'/g, "\\'")}')" 
+                    class="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500/10 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                
+                <!-- Actor Photo -->
+                <div class="relative w-16 h-16 rounded-lg overflow-hidden bg-indigo-500/20 flex items-center justify-center mb-3 flex-shrink-0">
+                    ${actor.photo 
+                        ? `<img src="${actor.photo}" alt="${actor.name}" class="w-full h-full object-cover">`
+                        : `<svg class="w-8 h-8 text-indigo-400/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>`}
+                </div>
+                
+                <!-- Actor Name -->
+                <p class="text-sm font-medium text-center break-words max-w-full">${actor.name}</p>
+                <p class="text-xs opacity-40 mt-0.5">${actor.photo ? '✓ Есть фото' : 'Без фото'}</p>
+            </div>
+        `).join('');
+    }
+
+    // ===== ADD CHANNEL =====
+    async function addChannel(e) {
+        e.preventDefault();
+        const form = e.target;
+        const name = form.querySelector('[name="channelName"]').value.trim();
+        const category = form.querySelector('[name="channelCategory"]').value;
+        const streamUrl = form.querySelector('[name="streamUrl"]').value.trim();
+        if (!name || !category || !streamUrl) {
+            showToast('toast_fill_fields', 'error');
+            return false;
+        }
+        const quality = form.querySelector('[name="channelQuality"]').value;
+        const description = form.querySelector('[name="channelDescription"]').value.trim();
+        const logoImg = document.getElementById('tvPosterImg').src;
+        const hasLogo = !document.getElementById('tvPosterPreview').classList.contains('hidden');
+
+        const btn = document.getElementById('tvSubmitBtn');
+        const spinner = document.getElementById('tvBtnSpinner');
+        const btnText = document.getElementById('tvBtnText');
+        // 👇 ДОБАВИТЬ:
+        const isSubscription = form.querySelector('[name="channelSubscription"]').checked;
+        
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        btnText.classList.add('hidden');
+
+        try {
+            const channelData = {
+                name,
+                category,
+                quality,
+                stream_url: streamUrl,
+                logo: hasLogo ? logoImg : '',
+                description,
+                is_subscription: isSubscription  // ← ДОБАВИТЬ
+            };
+            await addChannelAPI(channelData);
+            await loadChannels();
+
+            // Reset form
+            form.reset();
+            document.getElementById('tvPosterPreview').classList.add('hidden');
+            document.getElementById('tvDropContent').classList.remove('hidden');
+            document.getElementById('tvPosterImg').src = '';
+
+            showToast('toast_channel_added', 'success');
+        } catch (err) {
+            console.error(err);
+            showToast('toast_fill_fields', 'error');
+        } finally {
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+            btnText.classList.remove('hidden');
+        }
+
+        return false;
+    }
+
+    // ===== DELETE =====
+    async function deleteMovie(id) {
+        if (!confirm(translations[currentLang].delete_confirm)) return;
+        try {
+            await deleteMovieAPI(id);
+            await loadMovies();
+            showToast('toast_deleted', 'success');
+        } catch (err) {
+            console.error(err);
+        }
+    }
+    async function deleteChannel(id) {
+        if (!confirm(translations[currentLang].delete_confirm)) return;
+        try {
+            await deleteChannelAPI(id);
+            await loadChannels();
+            showToast('toast_deleted', 'success');
+        } catch (err) {
+            console.error(err);
+        }
+    }
+    
+    async function deleteUser(id) {
+        if (!confirm(translations[currentLang].delete_confirm)) return;
+        try {
+            await deleteUserAPI(id);
+            await loadUsers();
+            showToast('toast_deleted', 'success');
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // ===== UPDATE UI =====
+    function updateUI() {
+        document.getElementById('movieCount').textContent = movies.length;
+        document.getElementById('tvCount').textContent = channels.length;
+        document.getElementById('usersCount').textContent = users.length;
+        document.getElementById('statMovies').textContent = movies.length;
+        document.getElementById('statChannels').textContent = channels.length;
+        document.getElementById('statToday').textContent = todayCount;
+        updateDashboard();
+    }
+
+    // ===== DASHBOARD =====
+    function updateDashboard() {
+        const t = translations[currentLang];
+        // Movies
+        const movieContainer = document.getElementById('dashboardMovies');
+        if (movies.length === 0) {
+            movieContainer.innerHTML = `<p class="text-sm opacity-40 py-4 text-center">${t.no_movies_yet}</p>`;
+        } else {
+            movieContainer.innerHTML = movies.slice(0, 5).map(m => {
+                const actors = typeof m.actors === 'string' ? JSON.parse(m.actors || '[]') : (m.actors || []);
+                const actorAvatars = actors.slice(0, 3).map(actor => {
+                    const actorName = typeof actor === 'string' ? actor : actor.name;
+                    const actorPhoto = typeof actor === 'object' ? actor.photo : null;
+                    return `
+                        <div class="relative group">
+                            <img src="${actorPhoto || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z%22/%3E%3C/svg%3E'}" alt="${actorName}" class="w-6 h-6 rounded-full object-cover border border-indigo-500/30 -mr-2 hover:z-10">
+                            <div class="hidden group-hover:block absolute bottom-full left-0 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap mb-1 z-20">${actorName}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+                return `
+                    <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors">
+                        ${m.poster ? `<img src="${m.poster}" class="w-10 h-14 rounded-lg object-cover shrink-0" alt="">` :
+                        `<div class="w-10 h-14 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4"/></svg>
+                        </div>`}
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium truncate">${m.name}</p>
+                            <div class="flex items-center gap-1 mt-1">
+                                <div class="flex -space-x-2">${actorAvatars}</div>
+                                ${actors.length > 3 ? `<span class="text-xs opacity-40">+${actors.length - 3}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        // Channels
+        const channelContainer = document.getElementById('dashboardChannels');
+        if (channels.length === 0) {
+            channelContainer.innerHTML = `<p class="text-sm opacity-40 py-4 text-center">${t.no_channels_yet}</p>`;
+        } else {
+            channelContainer.innerHTML = channels.slice(0, 5).map(c => `
+                <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors">
+                    ${c.logo ? `<img src="${c.logo}" class="w-10 h-10 rounded-lg object-cover shrink-0" alt="">` :
+                    `<div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </div>`}
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium truncate">${c.name}</p>
+                        <p class="text-xs opacity-40">${c.category} ${c.quality ? '• ' + c.quality : ''}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+
+    // ===== RENDER MOVIES TABLE =====
+    function renderMoviesTable() {
+        const t = translations[currentLang];
+        const tbody = document.getElementById('moviesTableBody');
+        if (movies.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-12 text-center opacity-40 text-sm">${t.no_movies_yet}</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = movies.map(m => {
+            const genres = typeof m.genres === 'string' ? JSON.parse(m.genres || '[]') : (m.genres || []);
+            const actors = typeof m.actors === 'string' ? JSON.parse(m.actors || '[]') : (m.actors || []);
+            
+            // Создаем HTML для отображения актеров с фото
+            let actorsHtml = '';
+            if (actors && actors.length) {
+                const actorChips = actors.slice(0, 3).map(actor => {
+                    const actorName = typeof actor === 'string' ? actor : actor.name;
+                    const actorPhoto = typeof actor === 'object' ? actor.photo : null;
+                    return `
+                        <div class="flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-500/15 text-indigo-400 text-xs whitespace-nowrap">
+                            ${actorPhoto ? `<img src="${actorPhoto}" alt="${actorName}" class="w-5 h-5 rounded object-cover">` : 
+                            `<div class="w-5 h-5 rounded bg-indigo-500/30 flex items-center justify-center text-xs">👤</div>`}
+                            <span>${actorName}</span>
+                        </div>
+                    `;
+                }).join('');
+                actorsHtml = `<div class="flex flex-wrap gap-1 mt-1">${actorChips}${actors.length > 3 ? `<span class="text-xs opacity-40">+${actors.length - 3}</span>` : ''}</div>`;
+            }
+            
+            return `
+            <tr class="table-row border-b dark:border-white/5 border-black/5">
+                <td class="px-6 py-4">
+                    ${m.poster ? `<img src="${m.poster}" class="w-10 h-14 rounded-lg object-cover" alt="">` :
+                    `<div class="w-10 h-14 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-indigo-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>`}
+                </td>
+                <td class="px-6 py-4">
+                    <p class="text-sm font-medium">${m.name}</p>
+                    ${actorsHtml}
+                    <p class="text-xs opacity-60 mt-0.5">${m.language || '—'}</p>
+                </td>
+                <td class="px-6 py-4 text-sm opacity-60 hidden md:table-cell">${m.year}</td>
+                <td class="px-6 py-4 text-sm opacity-60 hidden lg:table-cell">${genres && genres.length ? genres.join(', ') : '—'}</td>
+                <td class="px-6 py-4 text-sm hidden md:table-cell">${m.rating ? `⭐ ${m.rating}` : '—'}</td>
+                <td class="px-6 py-4 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                        <button onclick="showToast('edit','info')" class="p-2 rounded-lg hover:bg-indigo-500/10 text-indigo-400 transition-colors" title="${t.edit}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        </button>
+                        <button onclick="deleteMovie(${m.id})" class="p-2 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors" title="${t.delete}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    ${m.is_subscription 
+                        ? '<span class="px-2 py-1 rounded-lg bg-accent-500/20 text-accent-400 text-xs">Подписка</span>' 
+                        : '<span class="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 text-xs">Бесплатно</span>'}
+                </td>
+            </tr>
+        `}).join('');
+    }
+
+    // ===== RENDER TV TABLE =====
+    function renderTvTable() {
+        const t = translations[currentLang];
+        const tbody = document.getElementById('tvTableBody');
+        if (channels.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center opacity-40 text-sm">${t.no_channels_yet}</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = channels.map(c => `
+            <tr class="table-row border-b dark:border-white/5 border-black/5">
+                <td class="px-6 py-4">
+                    ${c.logo ? `<img src="${c.logo}" class="w-10 h-10 rounded-lg object-cover" alt="">` :
+                    `<div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </div>`}
+                </td>
+                <td class="px-6 py-4">
+                    <p class="text-sm font-medium">${c.name}</p>
+                    <p class="text-xs opacity-40 mt-0.5 truncate max-w-xs">${c.stream_url}</p>
+                </td>
+                <td class="px-6 py-4 text-sm opacity-60 hidden md:table-cell">${c.category}</td>
+                <td class="px-6 py-4 text-sm opacity-60 hidden md:table-cell">
+                    <span class="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-400 text-xs">${c.quality}</span>
+                </td>
+                <td class="px-6 py-4">
+                    ${c.is_subscription 
+                        ? '<span class="px-2 py-1 rounded-lg bg-accent-500/20 text-accent-400 text-xs">Подписка</span>' 
+                        : '<span class="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 text-xs">Бесплатно</span>'}
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                        <button onclick="showToast('edit','info')" class="p-2 rounded-lg hover:bg-indigo-500/10 text-indigo-400 transition-colors" title="${t.edit}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        </button>
+                        <button onclick="deleteChannel(${c.id})" class="p-2 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors" title="${t.delete}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </div>
+                </td>
+
+            </tr>
+        `).join('');
+    }
+
+    // ===== RENDER USERS TABLE =====
+    function renderUsersTable() {
+        const t = translations[currentLang];
+        const tbody = document.getElementById('usersTableBody');
+        if (users.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-12 text-center opacity-40 text-sm">${t.no_users_yet}</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = users.map(u => {
+            const date = u.created_at ? new Date(u.created_at).toLocaleDateString(currentLang === 'ru' ? 'ru-RU' : currentLang === 'es' ? 'es-ES' : 'en-US') : '—';
+            return `
+            <tr class="table-row border-b dark:border-white/5 border-black/5">
+                <td class="px-6 py-4 text-sm font-medium">${u.id}</td>
+                <td class="px-6 py-4">
+                    <p class="text-sm font-medium">${u.username}</p>
+                </td>
+                <td class="px-6 py-4 text-sm opacity-60 hidden md:table-cell">${u.email || '—'}</td>
+                <td class="px-6 py-4 text-sm opacity-60 hidden lg:table-cell">${date}</td>
+                <td class="px-4 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                           ${u.subscription ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                        ${u.subscription ? 'Активна' : 'Отсутствует'}
+                    </span>
+                </td>
+                <td class="px-6 py-4">
+                    ${u.is_active
+                        ? '<span class="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 text-xs">' + (t.active || 'Активен') + '</span>'
+                        : '<span class="px-2 py-1 rounded-lg bg-red-500/20 text-red-400 text-xs">' + (t.inactive || 'Неактивен') + '</span>'}
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                        <button onclick="deleteUser(${u.id})" class="p-2 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors" title="${t.delete}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </div>
+                </td>
+
+
+            </tr>
+        `}).join('');
+    }
+
+    // ===== TOAST =====
+    function showToast(key, type) {
+        const t = translations[currentLang];
+        const message = t[key] || key;
+        const colors = {
+            success: 'from-green-500 to-emerald-600',
+            error: 'from-red-500 to-rose-600',
+            info: 'from-blue-500 to-indigo-600'
+        };
+        const icons = {
+            success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+            error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+            info: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+        };
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast-enter flex items-center gap-3 px-5 py-4 rounded-2xl text-white bg-gradient-to-r ${colors[type] || colors.info} shadow-2xl max-w-sm`;
+        toast.innerHTML = `
+            ${icons[type] || icons.info}
+            <p class="text-sm font-medium flex-1">${message}</p>
+            <button onclick="this.parentElement.classList.add('toast-exit');setTimeout(()=>this.parentElement.remove(),300)" class="p-1 hover:bg-white/20 rounded-lg transition-colors shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.classList.add('toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 4000);
+    }
+
+    // ===== SUBSCRIPTIONS MANAGEMENT =====
+
+    async function saveSubscriptions() {
+        const plans = [
+            {
+                id: 1,
+                price: parseInt(document.getElementById('plan1_price').value) || 29000,
+                quality: document.getElementById('plan1_quality').value,
+                devices: parseInt(document.getElementById('plan1_devices').value) || 1,
+                archive_days: parseInt(document.getElementById('plan1_archive').value) || 7,
+                discount_percent: 0,
+                is_popular: false
+            },
+            {
+                id: 2,
+                price: parseInt(document.getElementById('plan2_price').value) || 74000,
+                quality: document.getElementById('plan2_quality').value,
+                devices: parseInt(document.getElementById('plan2_devices').value) || 2,
+                archive_days: parseInt(document.getElementById('plan2_archive').value) || 14,
+                discount_percent: parseInt(document.getElementById('plan2_discount').value) || 15,
+                is_popular: document.getElementById('plan2_popular').checked
+            },
+            {
+                id: 3,
+                price: parseInt(document.getElementById('plan3_price').value) || 199000,
+                quality: document.getElementById('plan3_quality').value,
+                devices: parseInt(document.getElementById('plan3_devices').value) || 4,
+                archive_days: parseInt(document.getElementById('plan3_archive').value) || 30,
+                discount_percent: parseInt(document.getElementById('plan3_discount').value) || 30,
+                is_popular: false
+            }
+        ];
+        
+        try {
+            // Сохраняем каждый план
+            for (const plan of plans) {
+                await fetch(`/api/admin/subscription-plans/${plan.id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(plan)
+                });
+            }
+            
+            // Сохраняем настройки
+            await fetch('/api/admin/settings', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    trial_days: parseInt(document.getElementById('trialDays').value) || 7,
+                    currency: document.getElementById('currency').value,
+                    auto_renewal: document.getElementById('autoRenewal').checked,
+                    notifications_enabled: document.getElementById('notifications').checked
+                })
+            });
+            
+            showToast('Настройки подписок успешно сохранены', 'success');
+        } catch (error) {
+            showToast('Ошибка сохранения', 'error');
+        }
+    }
+
+
+    async function loadSubscriptions() {
+        try {
+            // Загружаем планы
+            const plansRes = await fetch('/api/admin/subscription-plans');
+            const plans = await plansRes.json();
+            
+            // Заполняем поля — если планов меньше 3, используем значения по умолчанию
+            if (plans.length >= 1) {
+                document.getElementById('plan1_price').value = plans[0].price || 29000;
+                document.getElementById('plan1_quality').value = plans[0].quality || 'HD';
+                document.getElementById('plan1_devices').value = plans[0].devices || 1;
+                document.getElementById('plan1_archive').value = plans[0].archive_days || 7;
+            }
+            if (plans.length >= 2) {
+                document.getElementById('plan2_price').value = plans[1].price || 74000;
+                document.getElementById('plan2_quality').value = plans[1].quality || 'Full HD';
+                document.getElementById('plan2_devices').value = plans[1].devices || 2;
+                document.getElementById('plan2_archive').value = plans[1].archive_days || 14;
+                document.getElementById('plan2_discount').value = plans[1].discount_percent || 15;
+                document.getElementById('plan2_popular').checked = plans[1].is_popular || false;
+            }
+            if (plans.length >= 3) {
+                document.getElementById('plan3_price').value = plans[2].price || 199000;
+                document.getElementById('plan3_quality').value = plans[2].quality || '4K';
+                document.getElementById('plan3_devices').value = plans[2].devices || 4;
+                document.getElementById('plan3_archive').value = plans[2].archive_days || 30;
+                document.getElementById('plan3_discount').value = plans[2].discount_percent || 30;
+            }
+            
+            // Загружаем настройки
+            const settingsRes = await fetch('/api/admin/settings');
+            const settings = await settingsRes.json();
+            if (settings) {
+                document.getElementById('trialDays').value = settings.trial_days || 7;
+                document.getElementById('currency').value = settings.currency || 'UZS';
+                document.getElementById('autoRenewal').checked = settings.auto_renewal || false;
+                document.getElementById('notifications').checked = settings.notifications_enabled || false;
+            }
+            
+        } catch (error) {
+            console.error('Error loading subscriptions:', error);
+        }
+    }
+
+
+    async function loadReferralSettings() {
+        const res = await fetch('/api/admin/referral-settings');
+        const data = await res.json();
+        document.getElementById('referralPercent').value = data.referral_percent || 10;
+        updateExample(data.referral_percent || 10);
+    }
+
+    async function saveReferralSettings() {
+        const percent = parseInt(document.getElementById('referralPercent').value) || 10;
+        await fetch('/api/admin/referral-settings', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ referral_percent: percent })
+        });
+        showToast('Настройки реферальной программы сохранены', 'success');
+    }
+
+    function updateExample(percent) {
+        document.getElementById('examplePlan1').textContent = `+${Math.round(29000 * percent / 100).toLocaleString()} сум`;
+        document.getElementById('examplePlan2').textContent = `+${Math.round(74000 * percent / 100).toLocaleString()} сум`;
+        document.getElementById('examplePlan3').textContent = `+${Math.round(199000 * percent / 100).toLocaleString()} сум`;
+    }
+
+
+
+
+    // ===== APPLY TRANSLATIONS ON LOAD =====
+    applyTranslations();
+    updateThemeUI();
+    
+    // Load subscription data when page loads
+    loadSubscriptions();
+    </script>
+</body>
+</html>
+

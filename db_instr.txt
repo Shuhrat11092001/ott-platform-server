@@ -1,0 +1,2 @@
+journalctl -u fastapi_app -f
+sudo systemctl restart fastapi_app

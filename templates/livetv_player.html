@@ -1,0 +1,748 @@
+
+{% extends "base.html" %}
+
+{% block title %}Streamit — Смотрите фильмы и сериалы онлайн{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* ============================================
+           CSS RESET & VARIABLES
+           ============================================ */
+                *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #050505;
+            --bg-secondary: #1A1A1A;
+            --bg-tertiary: #222222;
+            --bg-card: #111111;
+            --accent: #E50914;
+            --accent-hover: #FF1A25;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B3B3B3;
+            --text-muted: #666666;
+            --border-color: #1E1E1E;
+            --shadow-card: 0 4px 24px rgba(0,0,0,0.6);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --header-height: 60px;
+            --max-width: 1400px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: #333 #050505;
+        }
+
+        html::-webkit-scrollbar { width: 6px; }
+        html::-webkit-scrollbar-track { background: #050505; }
+        html::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============================================
+           MAIN LAYOUT
+           ============================================ */
+        .channel-page {
+            padding-top: calc(var(--header-height) + 24px);
+            padding-bottom: 60px;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding-left: 24px;
+            padding-right: 24px;
+        }
+
+        /* ============================================
+           CHANNEL HEADER
+           ============================================ */
+        .channel-header {
+            position: relative;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: 24px;
+            background: var(--bg-secondary);
+        }
+
+        .channel-banner {
+            width: 100%;
+            aspect-ratio: 21/6;
+            object-fit: cover;
+            display: block;
+        }
+
+        .channel-banner-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, rgba(5,5,5,0.9) 0%, rgba(5,5,5,0.4) 60%, rgba(5,5,5,0) 100%);
+            display: flex;
+            align-items: flex-end;
+            padding: 24px;
+        }
+
+        .live-badge-hero {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--accent);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: pulse-live 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-live {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .live-dot {
+            width: 6px; height: 6px; background: white; border-radius: 50%; position: relative;
+        }
+        .live-dot::after {
+            content: ''; position: absolute; inset: -3px; border-radius: 50%; background: var(--accent);
+            animation: pulse-ring 1.5s ease-out infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        .channel-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .channel-status {
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(229,9,20,0.15); border: 1px solid rgba(229,9,20,0.3);
+            padding: 4px 10px; border-radius: 100px; font-size: 12px; font-weight: 600; color: var(--accent);
+        }
+
+        .meta-chip {
+            font-size: 12px; color: var(--text-secondary); padding: 4px 10px;
+            background: rgba(255,255,255,0.08); border-radius: 100px;
+        }
+
+        .channel-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .channel-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* ============================================
+           PLAYER SECTION
+           ============================================ */
+        .player-section {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .video-container {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player-placeholder {
+            text-align: center; color: var(--text-muted);
+        }
+        .player-placeholder svg { width: 64px; height: 64px; color: #333; margin-bottom: 12px; }
+        .player-placeholder h3 { font-family: 'Poppins', sans-serif; font-size: 20px; color: var(--text-primary); margin-bottom: 4px; }
+        .player-placeholder p { font-size: 13px; }
+
+        /* Custom Controls */
+        .player-controls {
+            padding: 12px 16px 8px;
+            background: var(--bg-secondary);
+        }
+
+        .progress-bar-container {
+            width: 100%; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; cursor: pointer; position: relative; margin-bottom: 12px; transition: height var(--transition-fast);
+        }
+        .progress-bar-container:hover { height: 6px; }
+        .progress-bar-buffer { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: rgba(255,255,255,0.2); border-radius: 2px; }
+        .progress-bar-fill { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: var(--accent); border-radius: 2px; }
+        .progress-bar-thumb {
+            position: absolute; top: 50%; left: 0%; transform: translate(-50%, -50%);
+            width: 12px; height: 12px; background: var(--accent); border-radius: 50%;
+            box-shadow: 0 0 6px rgba(229,9,20,0.5); opacity: 0; transition: opacity var(--transition-fast);
+        }
+        .progress-bar-container:hover .progress-bar-thumb { opacity: 1; }
+
+        .controls-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        }
+
+        .controls-left, .controls-right { display: flex; align-items: center; gap: 8px; }
+
+        .ctrl-btn {
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            background: none; border: none; color: var(--text-primary); cursor: pointer; border-radius: 50%; transition: background var(--transition-fast);
+        }
+        .ctrl-btn:hover { background: rgba(255,255,255,0.1); }
+        .ctrl-btn svg { width: 20px; height: 20px; }
+
+        .play-pause-btn {
+            width: 44px; height: 44px; background: var(--accent); border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(229,9,20,0.3);
+        }
+        .play-pause-btn:hover { background: var(--accent-hover); transform: scale(1.05); }
+
+        .time-display {
+            font-size: 12px; color: var(--text-secondary); font-family: 'Inter', monospace; min-width: 90px;
+        }
+
+        .player-actions {
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
+            border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 10px;
+        }
+
+        .action-group { display: flex; gap: 8px; }
+
+        .action-btn {
+            display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+            color: var(--text-secondary); font-size: 12px; font-weight: 500; cursor: pointer;
+            transition: all var(--transition-fast); font-family: 'Inter', sans-serif;
+        }
+        .action-btn:hover { border-color: var(--accent); color: var(--text-primary); background: rgba(229,9,20,0.1); }
+        .action-btn svg { width: 14px; height: 14px; }
+
+        /* ============================================
+           CHANNEL INFO
+           ============================================ */
+        .channel-info-section {
+            margin-bottom: 32px;
+            padding: 24px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+        }
+
+        .info-grid {
+            display: grid; grid-template-columns: 2fr 1fr; gap: 24px;
+        }
+
+        .info-text h3 {
+            font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; margin-bottom: 12px;
+        }
+
+        .info-text p {
+            font-size: 14px; line-height: 1.7; color: var(--text-secondary); margin-bottom: 16px;
+        }
+
+        .info-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+        .info-chip {
+            padding: 6px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color);
+            border-radius: 100px; font-size: 12px; color: var(--text-secondary);
+        }
+
+        .info-details { display: flex; flex-direction: column; gap: 12px; }
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .info-label { font-size: 13px; color: var(--text-muted); }
+        .info-value { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+
+        /* ============================================
+           EPG SECTION
+           ============================================ */
+        .epg-section {
+            margin-bottom: 40px;
+        }
+
+        .epg-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+        }
+
+        .epg-title {
+            font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600;
+        }
+
+        .epg-tabs { display: flex; gap: 4px; }
+        .epg-tab {
+            padding: 8px 16px; background: var(--bg-secondary); border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 13px; font-weight: 500;
+            cursor: pointer; transition: all var(--transition-fast); font-family: 'Inter', sans-serif;
+        }
+        .epg-tab:hover { border-color: rgba(229,9,20,0.3); color: var(--text-primary); }
+        .epg-tab.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+        .epg-list { display: flex; flex-direction: column; }
+
+        .epg-item {
+            display: flex; gap: 16px; padding: 16px; background: var(--bg-secondary);
+            border: 1px solid var(--border-color); border-radius: var(--radius-md);
+            margin-bottom: 8px; transition: all var(--transition-fast); cursor: pointer;
+        }
+        .epg-item:hover { border-color: rgba(225,255,255,255,0.15); }
+        .epg-item.current {
+            background: rgba(229,9,20,0.08); border-color: rgba(229,9,20,0.4);
+            position: relative; padding-left: 24px;
+        }
+        .epg-item.current::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); border-radius: 4px 0 0 4px;
+        }
+
+        .epg-time {
+            min-width: 70px; font-size: 14px; font-weight: 600; color: var(--text-primary); padding-top: 2px;
+        }
+        .epg-item.current .epg-time { color: var(--accent); }
+
+        .epg-info { flex: 1; }
+        .epg-show-title { font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .epg-item.current .epg-show-title { color: var(--accent); }
+        .epg-desc { font-size: 13px; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .epg-status {
+            display: inline-flex; align-items: center; gap: 4px; margin-top: 6px;
+            font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        /* ============================================
+           SIMILAR CHANNELS
+           ============================================ */
+        .similar-section { margin-bottom: 40px; }
+
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+        }
+        .section-title { font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 700; }
+        .view-all-btn {
+            display: flex; align-items: center; gap: 6px; color: var(--text-secondary); text-decoration: none;
+            font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 4px;
+            transition: all var(--transition-fast); background: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif;
+        }
+        .view-all-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.06); }
+        .view-all-btn svg { transition: transform var(--transition-fast); }
+        .view-all-btn:hover svg { transform: translateX(3px); }
+
+        .similar-scroll {
+            display: flex; gap: 14px; overflow-x: auto; padding: 4px 0 16px; -ms-overflow-style: none; scrollbar-width: none;
+        }
+        .similar-scroll::-webkit-scrollbar { display: none; }
+
+        .similar-card {
+            flex: 0 0 auto; width: 220px; background: var(--bg-card); border-radius: var(--radius-md);
+            overflow: hidden; cursor: pointer; transition: all var(--transition-smooth); border: 1px solid transparent;
+        }
+        .similar-card:hover { transform: translateY(-3px); border-color: rgba(229,9,20,0.3); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+
+        .similar-thumb {
+            width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; transition: filter var(--transition-smooth);
+        }
+        .similar-card:hover .similar-thumb { filter: brightness(0.6); }
+
+        .similar-overlay {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.2); opacity: 0; transition: opacity var(--transition-smooth);
+        }
+        .similar-card:hover .similar-overlay { opacity: 1; }
+
+        .similar-play {
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            background: var(--accent); border-radius: 50%; transform: scale(0.7); opacity: 0; transition: all var(--transition-smooth);
+        }
+        .similar-card:hover .similar-play { opacity: 1; transform: scale(1); }
+
+        .similar-body { padding: 10px 12px; }
+        .similar-name { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .similar-genre { font-size: 11px; color: var(--text-muted); }
+
+        /* ============================================
+           MOBILE NAV
+           ============================================ */
+        .mobile-nav {
+            display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 56px;
+            background: rgba(5,5,5,0.97); backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border-color); z-index: 1000;
+        }
+        .mobile-nav-inner { display: flex; align-items: center; justify-content: space-around; height: 100%; }
+        .mobile-nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--text-muted);
+            text-decoration: none; font-size: 9px; font-weight: 500; padding: 6px 10px; border-radius: 4px;
+            transition: color var(--transition-fast); background: none; border: none; cursor: pointer;
+        }
+        .mobile-nav-item.active { color: var(--accent); }
+        .mobile-nav-item svg { width: 20px; height: 20px; }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 1024px) {
+            .nav-menu { display: none; }
+            .mobile-menu-btn { display: flex; }
+            .info-grid { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+            .footer-brand { grid-column: 1 / -1; }
+        }
+
+        @media (max-width: 768px) {
+            :root { --header-height: 52px; }
+            .header-inner { padding: 0 16px; }
+            .channel-page { padding-left: 16px; padding-right: 16px; padding-top: calc(var(--header-height) + 16px); }
+            .channel-banner { aspect-ratio: 16/9; }
+            .channel-title { font-size: 24px; }
+            .epg-item { flex-direction: column; gap: 8px; }
+            .epg-time { min-width: auto; }
+            .mobile-nav { display: block; }
+            body { padding-bottom: 56px; }
+            .footer-grid { grid-template-columns: 1fr; gap: 20px; }
+            .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+        }
+
+        @media (max-width: 480px) {
+            .player-actions { flex-direction: column; align-items: stretch; }
+            .action-group { justify-content: center; flex-wrap: wrap; }
+            .epg-tabs { overflow-x: auto; padding-bottom: 4px; }
+            .similar-card { width: 180px; }
+        }
+    </style>
+
+{% endblock %}
+
+{% block content %}
+
+
+    <!-- MAIN CONTENT -->
+    <main class="channel-page">
+
+        <!-- CHANNEL HEADER -->
+        <section class="channel-header">
+            <img src="{{ channel.logo or 'default_banner_url' }}" alt="{{ channel.name }}" class="channel-banner">
+            <div class="live-badge-hero">
+                <span class="live-dot"></span>
+                LIVE
+            </div>
+            <div class="channel-banner-overlay">
+                <div>
+                    <div class="channel-meta">
+                        <span class="channel-status">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            В эфире
+                        </span>
+                        <span class="meta-chip">{{ channel.category or 'Entertainment' }}</span>
+                        <span class="meta-chip">12+</span>
+                <span class="meta-chip">Субтитры</span>
+                        <span class="meta-chip">{{ channel.quality or 'HD' }}</span>
+                    </div>
+                    <h1 class="channel-title">Dasturxon TV</h1>
+                    <p class="channel-subtitle">{{ channel.description or 'Прямой эфир' }}</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PLAYER SECTION -->
+        <section class="player-section">
+            <div class="video-container" id="videoContainer">
+                <video 
+                    id="livePlayer" 
+                    controls 
+                    autoplay 
+                    muted 
+                    style="width: 100%; height: 100%;"
+                >
+                    Ваш браузер не поддерживает видео воспроизведение.
+                </video>
+            </div>
+
+            <div class="player-actions">
+                <div class="action-group">
+                    <button class="action-btn" id="favBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        В избранное
+                    </button>
+                    <button class="action-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        Поделиться
+                    </button>
+                </div>
+                <div class="action-group">
+                    <button class="action-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="5" y1="12" x2="11" y2="12"/><line x1="13" y1="12" x2="19" y2="12"/><line x1="5" y1="16" x2="9" y2="16"/><line x1="15" y1="16" x2="19" y2="16"/></svg>
+                        Субтитры: ВКЛ
+                    </button>
+                    <button class="action-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                        Качество: Авто (HD)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHANNEL INFO -->
+        <section class="channel-info-section">
+            <div class="info-grid">
+                <div class="info-text">
+                    <h3>О канале {{ channel.name }}</h3>
+                    <p>{{ channel.description or 'Развлекательный канал с круглосуточным вещанием.' }}</p>
+                    <div class="info-chips">
+                        <span class="info-chip">{{ channel.category or 'Развлечения' }}</span>
+                        <span class="info-chip">Прямой эфир 24/7</span>
+                        <span class="info-chip">{{ channel.quality or 'HD' }}</span>
+                        <span class="info-chip">Субтитры</span>
+                    </div>
+                </div>
+                <div class="info-details">
+                    <div class="info-row">
+                        <span class="info-label">Категория</span>
+                        <span class="info-value">{{ channel.category or 'Развлечения' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Язык</span>
+                        <span class="info-value">Многоязычный</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Регион</span>
+                        <span class="info-value">Международный</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Рейтинг</span>
+                        <span class="info-value">12+</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Зрителей</span>
+                        <span class="info-value">12.4K</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- EPG SECTION -->
+        <section class="epg-section">
+            <div class="epg-header">
+                <h3 class="epg-title">Программа передач</h3>
+                <div class="epg-tabs" id="epgTabs">
+                    <button class="epg-tab active" data-day="today">Сегодня</button>
+                    <button class="epg-tab" data-day="tomorrow">Завтра</button>
+                    <button class="epg-tab" data-day="fri">Пятница</button>
+                </div>
+            </div>
+            <div class="epg-list" id="epgList">
+                <!-- EPG items injected by JS -->
+            </div>
+        </section>
+
+        <!-- SIMILAR CHANNELS -->
+        <section class="similar-section">
+            <div class="section-header">
+                <h3 class="section-title">Похожие каналы</h3>
+                <button class="view-all-btn">
+                    Все
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+            <div class="similar-scroll" id="similarScroll">
+                <!-- Similar cards injected by JS -->
+            </div>
+        </section>
+
+    </main>
+
+
+
+
+
+
+    <!-- MOBILE NAV -->
+    <nav class="mobile-nav">
+        <div class="mobile-nav-inner">
+            <a href="/" class="mobile-nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span></a>
+            <a href="/movies" class="mobile-nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg><span>Фильмы</span></a>
+            <a href="/livetv" class="mobile-nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg><span>ТВ</span></a>
+            <a href="/profile" class="mobile-nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></a>
+        </div>
+    </nav>
+
+    <script>
+        // ============================================
+        // DATA & RENDERING
+        // ============================================
+        const channelImages = [
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1d6942c46-e779-4730-b502-bba10e8c3f4f.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/17f2726d7-fb2f-4d9e-93dd-6cc41d6b9c26.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1e7527c56-44b4-4029-ba6f-d49456031630.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/18d46fac7-01a2-4867-a652-5150aefbfa6a.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1292280ce-4829-4007-a2e7-c2454dec5f8f.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1fd32efe2-1ae3-486a-9dd2-bae0136f619b.png'
+        ];
+
+        const channelData = {{ channel | tojson }};
+
+        // Инициализация плеера
+        document.addEventListener('DOMContentLoaded', function() {
+            const player = document.getElementById('livePlayer');
+            
+            if (channelData && channelData.stream_url) {
+                player.src = channelData.stream_url;
+                player.play().catch(e => {
+                    console.log('Автовоспроизведение заблокировано:', e);
+                });
+            }
+        });
+
+        const epgData = {
+            today: [
+                { time: '06:00', title: 'Morning Bhasha', desc: 'Devotional hymns & spiritual music to start your day.', current: false },
+                { time: '07:30', title: 'Yeh Hai Chahatein', desc: 'A heartfelt love story navigating family traditions and modern aspirations.', current: false },
+                { time: '09:00', title: 'Shakti - Aagh Pyaar Ka', desc: 'A warrior\'s journey through destiny, magic, and eternal love.', current: true },
+                { time: '10:30', title: 'Bigg Boss 18', desc: 'Live house updates, nominations, and contestant confrontations.', current: false },
+                { time: '13:00', title: 'Movie: Jawan', desc: 'A high-octane action thriller featuring a vigilante on a mission for justice.', current: false },
+                { time: '16:00', title: 'Sasural Simar Ka 2', desc: 'Simar faces new challenges in her in-laws\' household while pursuing her dreams.', current: false },
+                { time: '18:00', title: 'News India', desc: 'Top headlines, weather forecast, and market analysis.', current: false },
+                { time: '19:30', title: 'Movie: Pathaan', desc: 'A retired black-ops agent reunites with his ex-colleagues to stop a nuclear threat.', current: false },
+                { time: '22:30', title: 'The Kapil Sharma Show', desc: 'Comedy sketches, celebrity interviews, and audience interactions.', current: false },
+                { time: '00:00', title: 'Late Night Classics', desc: 'Golden era Bollywood hits and nostalgic musical performances.', current: false }
+            ],
+            tomorrow: [
+                { time: '07:00', title: 'Yeh Hai Chahatein', desc: 'Continued episodes from the morning schedule.', current: false },
+                { time: '09:00', title: 'Anupamaa', desc: 'A mother\'s struggle for respect and recognition within her family.', current: false },
+                { time: '11:00', title: 'Movie: Animal', desc: 'A complex saga of father-son relationship, power, and revenge.', current: false },
+                { time: '15:00', title: 'Kaun Banega Crorepati', desc: 'The ultimate quiz show where contestants risk it all for crores.', current: false },
+                { time: '17:00', title: 'Naagin 6', desc: 'Shakti returns to uncover ancient secrets and protect her lineage.', current: false },
+                { time: '19:00', title: 'Crime Patrol', desc: 'Real-life crime reenactments focusing on social awareness.', current: false },
+                { time: '21:00', title: 'Movie: Tiger 3', desc: 'A top agent goes undercover to dismantle a powerful terrorist network.', current: false }
+            ],
+            fri: [
+                { time: '08:00', title: 'Morning Prayers', desc: 'Live spiritual broadcasts and classical Indian music.', current: false },
+                { time: '10:00', title: 'Movie: Gadar 2', desc: 'Tara Singh faces new challenges in 1971 during the Indo-Pak war.', current: false },
+                { time: '13:30', title: 'Uttaran', desc: 'Classic drama series revolving around family honor and loyalty.', current: false },
+                { time: '16:00', title: 'Jhalak Dikhhla Jaa', desc: 'Star contestants showcase their dance skills in electrifying performances.', current: false },
+                { time: '18:30', title: 'Movie: Animal', desc: 'Repeat telecast of the blockbuster action drama.', current: false },
+                { time: '21:30', title: 'The Great Indian Laughter Challenge', desc: 'Stand-up comedy battles featuring top regional comedians.', current: false }
+            ]
+        };
+
+        const similarChannels = [
+            { name: 'Zee TV', genre: 'Drama & Serials', img: 0 },
+            { name: 'Sony SAB', genre: 'Comedy & Family', img: 1 },
+            { name: 'Star Utsav', genre: 'Entertainment & Reality', img: 2 },
+            { name: 'Colors Cineplex', genre: 'Movies & Classics', img: 3 },
+            { name: 'Aaj Tak', genre: 'News & Current Affairs', img: 4 },
+            { name: '9X Jalwa', genre: 'Music & Youth', img: 5 }
+        ];
+
+        // Render EPG
+        function renderEPG(day) {
+            const list = document.getElementById('epgList');
+            list.innerHTML = '';
+            epgData[day].forEach(item => {
+                const el = document.createElement('div');
+                el.className = `epg-item ${item.current ? 'current' : ''}`;
+                el.innerHTML = `
+                    <div class="epg-time">${item.time}</div>
+                    <div class="epg-info">
+                        <div class="epg-show-title">${item.title}</div>
+                        <div class="epg-desc">${item.desc}</div>
+                        ${item.current ? '<div class="epg-status"><span class="live-dot" style="width:4px;height:4px;background:var(--accent);"></span> СЕЙЧАС В ЭФИРЕ</div>' : ''}
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        // Render Similar
+        function renderSimilar() {
+            const container = document.getElementById('similarScroll');
+            similarChannels.forEach(ch => {
+                const card = document.createElement('div');
+                card.className = 'similar-card';
+                card.innerHTML = `
+                    <div style="position:relative;">
+                        <img src="${channelImages[ch.img]}" alt="${ch.name}" class="similar-thumb">
+                        <div class="similar-overlay">
+                            <div class="similar-play">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="similar-body">
+                        <div class="similar-name">${ch.name}</div>
+                        <div class="similar-genre">${ch.genre}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        renderEPG('today');
+        renderSimilar();
+
+        // ============================================
+        // INTERACTIONS
+        // ============================================
+        // EPG Tabs
+        document.querySelectorAll('.epg-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.epg-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                renderEPG(tab.dataset.day);
+            });
+        });
+
+
+
+        // Progress Bar Click
+        document.getElementById('progressBar').addEventListener('click', (e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const percent = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+            e.currentTarget.querySelector('.progress-bar-fill').style.width = percent + '%';
+            e.currentTarget.querySelector('.progress-bar-thumb').style.left = percent + '%';
+        });
+
+        // Favorites Toggle
+        const favBtn = document.getElementById('favBtn');
+        favBtn.addEventListener('click', () => {
+            const isFav = favBtn.classList.toggle('active');
+            favBtn.innerHTML = isFav
+                ? `<svg viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> В избранном`
+                : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> В избранное`;
+        });
+
+        // Mobile Nav
+        document.querySelectorAll('.mobile-nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+    </script>
+{% endblock %}

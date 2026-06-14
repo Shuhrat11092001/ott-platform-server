@@ -1,0 +1,1802 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль — Streamit</title>
+    <link href="https://fontsource.org/poppins/400.css" rel="stylesheet">
+    <link href="https://fontsource.org/poppins/500.css" rel="stylesheet">
+    <link href="https://fontsource.org/poppins/600.css" rel="stylesheet">
+    <link href="https://fontsource.org/poppins/700.css" rel="stylesheet">
+    <link href="https://fontsource.org/inter/400.css" rel="stylesheet">
+    <link href="https://fontsource.org/inter/500.css" rel="stylesheet">
+    <link href="https://fontsource.org/space-grotesk/500.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0A0A0A;
+            --bg-secondary: #1A1A1A;
+            --bg-tertiary: #222222;
+            --accent: #E50914;
+            --accent-hover: #FF1A25;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B3B3B3;
+            --text-muted: #666666;
+            --border-color: #2A2A2A;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            --header-height: 64px;
+            --max-width: 1320px;
+        }
+
+        html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: #333 #0A0A0A; }
+        html::-webkit-scrollbar { width: 6px; }
+        html::-webkit-scrollbar-track { background: #0A0A0A; }
+        html::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============================================
+           HEADER
+           ============================================ */
+        .header {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--header-height); z-index: 1000;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .header-inner {
+            max-width: var(--max-width); margin: 0 auto;
+            padding: 0 24px; height: 100%;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .header-left { display: flex; align-items: center; gap: 32px; }
+        .logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+        .logo-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px;
+        }
+        .nav-menu { display: flex; align-items: center; gap: 4px; list-style: none; }
+        .nav-menu a {
+            color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 500;
+            padding: 6px 12px; border-radius: 4px; transition: all var(--transition-fast);
+        }
+        .nav-menu a:hover { color: var(--text-primary); background: rgba(255,255,255,0.06); }
+        .nav-menu a.active { color: var(--accent); }
+        .header-right { display: flex; align-items: center; gap: 4px; }
+        .icon-btn {
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            background: none; border: none; color: var(--text-secondary); cursor: pointer;
+            border-radius: 50%; transition: all var(--transition-fast);
+        }
+        .icon-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.08); }
+        .profile-btn-header {
+            display: flex; align-items: center; gap: 8px; background: none; border: none;
+            cursor: pointer; padding: 4px 6px; border-radius: 4px;
+            transition: background var(--transition-fast);
+        }
+        .profile-btn-header:hover { background: rgba(255,255,255,0.08); }
+        .profile-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); }
+        .mobile-menu-btn {
+            display: none; width: 36px; height: 36px; align-items: center; justify-content: center;
+            background: none; border: none; color: var(--text-secondary); cursor: pointer;
+        }
+
+        /* ============================================
+           LANGUAGE SWITCHER
+           ============================================ */
+        .language-switcher {
+            position: relative;
+        }
+        .language-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 10px; background: none; border: none;
+            color: var(--text-secondary); cursor: pointer;
+            border-radius: 6px; transition: all var(--transition-fast);
+            font-size: 13px; font-weight: 500;
+        }
+        .language-btn:hover {
+            color: var(--text-primary); background: rgba(255,255,255,0.08);
+        }
+        .language-flag {
+            width: 16px; height: 16px; border-radius: 2px;
+        }
+        .language-dropdown {
+            position: absolute; top: 100%; right: 0; margin-top: 8px;
+            background: var(--bg-secondary); border: 1px solid var(--border-color);
+            border-radius: var(--radius-md); padding: 4px;
+            min-width: 140px; z-index: 1000;
+            opacity: 0; visibility: hidden; transform: translateY(-8px);
+            transition: all var(--transition-fast);
+        }
+        .language-dropdown.active {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        .language-option {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 12px; border-radius: 4px;
+            color: var(--text-secondary); cursor: pointer;
+            transition: all var(--transition-fast);
+            font-size: 13px;
+        }
+        .language-option:hover {
+            color: var(--text-primary); background: rgba(255,255,255,0.06);
+        }
+        .language-option.active {
+            color: var(--accent); background: rgba(229,9,20,0.1);
+        }
+
+        /* ============================================
+           MAIN LAYOUT
+           ============================================ */
+        .page-wrapper {
+            padding-top: calc(var(--header-height) + 24px);
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-bottom: 60px;
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 8px; font-size: 13px;
+        }
+        .breadcrumb a {
+            color: var(--text-muted); text-decoration: none; transition: color var(--transition-fast);
+        }
+        .breadcrumb a:hover { color: var(--text-primary); }
+        .breadcrumb .separator { color: var(--text-muted); }
+        .breadcrumb .current { color: var(--text-secondary); }
+
+        /* Page Title */
+        .page-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 32px; font-weight: 700;
+            margin-bottom: 28px;
+        }
+
+        /* ============================================
+           USER INFO BAR
+           ============================================ */
+        .user-info-bar {
+            display: flex; align-items: center; gap: 24px;
+            padding: 20px 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .user-info-item {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .user-info-label {
+            font-size: 13px; color: var(--text-muted);
+        }
+        .user-info-value {
+            font-size: 14px; font-weight: 600; color: var(--text-primary);
+        }
+        .user-info-divider {
+            width: 1px; height: 24px; background: var(--border-color);
+        }
+        .subscription-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 12px;
+            border-radius: 100px;
+            font-size: 12px; font-weight: 600;
+        }
+        .subscription-badge.active {
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: var(--success);
+        }
+        .subscription-badge.inactive {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+        .subscription-badge svg { width: 14px; height: 14px; }
+
+        /* ============================================
+           LAYOUT: SIDEBAR + CONTENT
+           ============================================ */
+        .profile-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 24px;
+            min-height: 500px;
+        }
+
+        /* ============================================
+           SIDEBAR
+           ============================================ */
+        .sidebar {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 8px;
+            height: fit-content;
+            position: sticky;
+            top: calc(var(--header-height) + 48px);
+        }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            color: var(--text-secondary);
+            font-size: 14px; font-weight: 500;
+            border: none; background: none; width: 100%;
+            text-align: left; font-family: 'Inter', sans-serif;
+        }
+        .sidebar-item:hover {
+            background: rgba(255,255,255,0.06);
+            color: var(--text-primary);
+        }
+        .sidebar-item.active {
+            background: rgba(229, 9, 20, 0.12);
+            color: var(--accent);
+        }
+        .sidebar-item svg {
+            width: 20px; height: 20px; flex-shrink: 0;
+        }
+        .sidebar-item .badge {
+            margin-left: auto;
+            font-size: 10px; font-weight: 700;
+            padding: 2px 8px; border-radius: 100px;
+            background: var(--accent);
+            color: white;
+        }
+
+        /* ============================================
+           CONTENT AREA
+           ============================================ */
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================================
+           TAB 1: PROFILE
+           ============================================ */
+        .profile-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 24px;
+        }
+        .profile-card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+        }
+        .profile-card-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 18px; font-weight: 600;
+        }
+        .btn-edit {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 13px; font-weight: 500;
+            cursor: pointer; transition: all var(--transition-fast);
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-edit:hover {
+            border-color: var(--accent); color: var(--accent);
+            background: rgba(229,9,20,0.08);
+        }
+        .btn-edit svg { width: 14px; height: 14px; }
+
+        .profile-avatar-large {
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .profile-avatar-large img {
+            width: 64px; height: 64px; border-radius: 50%;
+            object-fit: cover; border: 3px solid var(--border-color);
+        }
+        .profile-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 20px; font-weight: 600;
+        }
+        .profile-email {
+            font-size: 13px; color: var(--text-muted);
+        }
+
+        .profile-details {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+        }
+        .profile-detail-item {
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .profile-detail-label {
+            font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .profile-detail-value {
+            font-size: 14px; font-weight: 500; color: var(--text-primary);
+        }
+
+        .btn-new-profile {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 14px;
+            background: var(--bg-tertiary);
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-size: 14px; font-weight: 500;
+            cursor: pointer; transition: all var(--transition-fast);
+            font-family: 'Inter', sans-serif; margin-top: 16px;
+        }
+        .btn-new-profile:hover {
+            border-color: var(--accent); color: var(--accent);
+            background: rgba(229,9,20,0.04);
+        }
+        .btn-new-profile svg { width: 18px; height: 18px; }
+
+        .btn-logout {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 14px;
+            background: rgba(229, 9, 20, 0.1);
+            border: 1px solid rgba(229, 9, 20, 0.3);
+            border-radius: var(--radius-md);
+            color: var(--accent);
+            font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all var(--transition-fast);
+            font-family: 'Poppins', sans-serif; margin-top: 12px;
+        }
+        .btn-logout:hover {
+            background: var(--accent); color: white;
+            border-color: var(--accent);
+        }
+        .btn-logout svg { width: 18px; height: 18px; }
+
+        /* ============================================
+           TAB 2: BALANCE
+           ============================================ */
+        .balance-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 24px;
+        }
+        .balance-card-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 18px; font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .quick-amounts {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+            margin-bottom: 20px;
+        }
+        .quick-amount-btn {
+            padding: 14px 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all var(--transition-fast);
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+        }
+        .quick-amount-btn:hover, .quick-amount-btn.selected {
+            border-color: var(--accent);
+            background: rgba(229,9,20,0.1);
+            color: var(--accent);
+        }
+        .quick-amount-btn .amount-sub {
+            font-size: 11px; font-weight: 400; color: var(--text-muted);
+            display: block; margin-top: 2px;
+        }
+
+        .custom-amount-input {
+            display: flex; gap: 10px; margin-bottom: 20px;
+        }
+        .custom-amount-input input {
+            flex: 1; height: 48px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 0 14px;
+            color: var(--text-primary);
+            font-size: 14px; font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color var(--transition-fast);
+        }
+        .custom-amount-input input:focus { border-color: var(--accent); }
+        .custom-amount-input input::placeholder { color: var(--text-muted); }
+
+        .payment-methods {
+            margin-bottom: 20px;
+        }
+        .payment-methods-label {
+            font-size: 13px; color: var(--text-muted); margin-bottom: 10px;
+        }
+        .payment-methods-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+        }
+        .payment-method-btn {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            padding: 16px 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 12px; font-weight: 500;
+            cursor: pointer; transition: all var(--transition-fast);
+            font-family: 'Inter', sans-serif;
+        }
+        .payment-method-btn:hover, .payment-method-btn.selected {
+            border-color: var(--accent);
+            color: var(--text-primary);
+            background: rgba(229,9,20,0.06);
+        }
+        .payment-method-btn svg { width: 28px; height: 28px; }
+
+        .btn-topup {
+            width: 100%; padding: 14px;
+            background: var(--accent);
+            border: none; border-radius: var(--radius-sm);
+            color: white; font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all var(--transition-fast);
+            font-family: 'Poppins', sans-serif;
+            box-shadow: 0 4px 16px rgba(229,9,20,0.3);
+        }
+        .btn-topup:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 6px 24px rgba(229,9,20,0.4);
+        }
+
+        /* History */
+        .history-list {
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .history-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+        .history-item-left {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .history-icon {
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            background: rgba(34, 197, 94, 0.1); border-radius: 50%;
+        }
+        .history-icon svg { width: 16px; height: 16px; color: var(--success); }
+        .history-method { font-size: 13px; font-weight: 500; }
+        .history-date { font-size: 12px; color: var(--text-muted); }
+        .history-amount {
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px; font-weight: 600; color: var(--success);
+        }
+
+        /* ============================================
+           TAB 3: SUBSCRIPTION
+           ============================================ */
+        .plans-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+            margin-bottom: 24px;
+        }
+        .plan-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-smooth);
+            position: relative;
+        }
+        .plan-card:hover {
+            border-color: rgba(229,9,20,0.3);
+            transform: translateY(-2px);
+        }
+        .plan-card.selected {
+            border-color: var(--accent);
+            background: rgba(229,9,20,0.06);
+        }
+        .plan-card.popular {
+            border-color: var(--accent);
+        }
+        .plan-popular-badge {
+            position: absolute; top: -1px; right: 20px;
+            background: var(--accent);
+            color: white;
+            font-size: 10px; font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 0 0 6px 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .plan-duration {
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px; font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .plan-price {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 32px; font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+        .plan-price-sub {
+            font-size: 13px; color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        .plan-features {
+            list-style: none; text-align: left;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .plan-features li {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; color: var(--text-secondary);
+        }
+        .plan-features li svg {
+            width: 16px; height: 16px; color: var(--success); flex-shrink: 0;
+        }
+        .plan-discount {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.12);
+            color: var(--warning);
+            font-size: 11px; font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 100px;
+            margin-bottom: 12px;
+        }
+
+        .btn-subscribe {
+            width: 100%; padding: 16px;
+            background: var(--accent);
+            border: none; border-radius: var(--radius-sm);
+            color: white; font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: all var(--transition-fast);
+            font-family: 'Poppins', sans-serif;
+            box-shadow: 0 4px 20px rgba(229,9,20,0.3);
+        }
+        .btn-subscribe:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 6px 28px rgba(229,9,20,0.4);
+            transform: translateY(-1px);
+        }
+
+        /* Benefits */
+        .benefits-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+        }
+        .benefit-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            text-align: center;
+        }
+        .benefit-icon {
+            width: 48px; height: 48px; margin: 0 auto 12px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(229,9,20,0.1);
+            border-radius: 50%;
+        }
+        .benefit-icon svg { width: 24px; height: 24px; color: var(--accent); }
+        .benefit-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px; font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .benefit-desc {
+            font-size: 12px; color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* ============================================
+           TAB 4: DEVICES
+           ============================================ */
+        .device-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 12px;
+            display: flex; align-items: center; gap: 16px;
+            transition: all var(--transition-fast);
+        }
+        .device-card:hover {
+            border-color: rgba(255,255,255,0.12);
+        }
+        .device-card.current {
+            border-color: rgba(229,9,20,0.3);
+            background: rgba(229,9,20,0.04);
+        }
+        .device-icon {
+            width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+            background: var(--bg-tertiary); border-radius: var(--radius-sm); flex-shrink: 0;
+        }
+        .device-icon svg { width: 22px; height: 22px; color: var(--text-secondary); }
+        .device-info { flex: 1; }
+        .device-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px; font-weight: 600;
+        }
+        .device-details {
+            font-size: 12px; color: var(--text-muted);
+        }
+        .device-status {
+            font-size: 11px; font-weight: 600;
+            padding: 3px 10px; border-radius: 100px;
+        }
+        .device-status.online {
+            background: rgba(34, 197, 94, 0.12);
+            color: var(--success);
+        }
+        .device-status.offline {
+            background: rgba(255,255,255,0.06);
+            color: var(--text-muted);
+        }
+        .device-action {
+            padding: 8px 14px;
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 12px; font-weight: 500;
+            cursor: pointer; transition: all var(--transition-fast);
+            font-family: 'Inter', sans-serif;
+        }
+        .device-action:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-logout-all {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 14px;
+            background: rgba(229, 9, 20, 0.08);
+            border: 1px solid rgba(229, 9, 20, 0.2);
+            border-radius: var(--radius-sm);
+            color: var(--accent);
+            font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all var(--transition-fast);
+            font-family: 'Poppins', sans-serif;
+            margin-top: 16px;
+        }
+        .btn-logout-all:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        .btn-logout-all svg { width: 18px; height: 18px; }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .footer {
+            padding: 36px 0 24px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 60px;
+        }
+        .footer-inner {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        .footer-grid {
+            display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+            gap: 32px; margin-bottom: 32px;
+        }
+        .footer-brand { display: flex; flex-direction: column; gap: 12px; }
+        .footer-logo { display: flex; align-items: center; gap: 8px; }
+        .footer-logo-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 20px; font-weight: 700; color: var(--accent);
+        }
+        .footer-description { font-size: 13px; color: var(--text-muted); line-height: 1.6; max-width: 260px; }
+        .footer-socials { display: flex; gap: 8px; }
+        .footer-social-btn {
+            width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+            background: var(--bg-secondary); border: 1px solid var(--border-color);
+            border-radius: 4px; color: var(--text-secondary); text-decoration: none;
+            transition: all var(--transition-fast);
+        }
+        .footer-social-btn:hover { background: var(--accent); border-color: var(--accent); color: white; }
+
+        .footer-column h4 {
+            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+            color: var(--text-primary); margin-bottom: 12px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .footer-column ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .footer-column a {
+            color: var(--text-muted); text-decoration: none; font-size: 13px;
+            transition: color var(--transition-fast);
+        }
+        .footer-column a:hover { color: var(--text-primary); }
+
+        .footer-bottom {
+            display: flex; align-items: center; justify-content: space-between;
+            padding-top: 20px; border-top: 1px solid var(--border-color);
+            font-size: 12px; color: var(--text-muted);
+        }
+        .footer-bottom-links { display: flex; gap: 20px; }
+        .footer-bottom-links a {
+            color: var(--text-muted); text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+        .footer-bottom-links a:hover { color: var(--text-primary); }
+
+        /* ============================================
+           MOBILE NAV
+           ============================================ */
+        .mobile-nav {
+            display: none; position: fixed; bottom: 0; left: 0; right: 0;
+            height: 56px; background: rgba(10,10,10,0.97);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border-color); z-index: 1000;
+        }
+        .mobile-nav-inner {
+            display: flex; align-items: center; justify-content: space-around; height: 100%;
+        }
+        .mobile-nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            color: var(--text-muted); text-decoration: none; font-size: 9px; font-weight: 500;
+            padding: 6px 10px; border-radius: 4px; transition: color var(--transition-fast);
+            background: none; border: none; cursor: pointer;
+        }
+        .mobile-nav-item.active { color: var(--accent); }
+        .mobile-nav-item svg { width: 20px; height: 20px; }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 1024px) {
+            .nav-menu { display: none; }
+            .mobile-menu-btn { display: flex; }
+            .profile-layout {
+                grid-template-columns: 200px 1fr;
+                gap: 20px;
+            }
+            .plans-grid { grid-template-columns: 1fr; }
+            .benefits-grid { grid-template-columns: 1fr 1fr; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+            .footer-brand { grid-column: 1 / -1; }
+        }
+
+        @media (max-width: 768px) {
+            :root { --header-height: 52px; }
+            .header-inner { padding: 0 16px; }
+            .page-wrapper { padding-left: 16px; padding-right: 16px; }
+
+            .profile-layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                position: static;
+                display: flex;
+                overflow-x: auto;
+                gap: 4px;
+                padding: 6px;
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .sidebar::-webkit-scrollbar { display: none; }
+            .sidebar-item {
+                white-space: nowrap;
+                flex-shrink: 0;
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+            .sidebar-item .badge { display: none; }
+
+            .user-info-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .user-info-divider { display: none; }
+
+            .quick-amounts { grid-template-columns: repeat(2, 1fr); }
+            .payment-methods-grid { grid-template-columns: repeat(2, 1fr); }
+            .profile-details { grid-template-columns: 1fr; }
+            .benefits-grid { grid-template-columns: 1fr; }
+
+            .page-title { font-size: 24px; }
+
+            .mobile-nav { display: block; }
+            body { padding-bottom: 56px; }
+            .footer-grid { grid-template-columns: 1fr; gap: 20px; }
+            .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+        }
+
+        @media (max-width: 480px) {
+            .user-info-bar { padding: 16px; }
+            .balance-card, .profile-card { padding: 16px; }
+            .plan-card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-inner">
+            <div class="header-left">
+                <a href="#" class="logo">
+                    <svg width="30" height="30" viewBox="0 0 36 36" fill="none">
+                        <rect width="36" height="36" rx="8" fill="#E50914"/>
+                        <path d="M10 10L18 14L26 10V26L18 22L10 26V10Z" fill="white" opacity="0.9"/>
+                        <path d="M10 10L18 14V22L10 26V10Z" fill="white"/>
+                    </svg>
+                    <span class="logo-text">Streamit</span>
+                </a>
+                <nav>
+                    <ul class="nav-menu">
+                        <li><a href="#">Главная</a></li>
+                        <li><a href="#">Фильмы</a></li>
+                        <li><a href="#">Сериалы</a></li>
+                        <li><a href="#">Live TV</a></li>
+                        <li><a href="#">Мой список</a></li>
+                    </ul>
+                </nav>
+
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" aria-label="Поиск">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+                <button class="icon-btn" aria-label="Уведомления">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                </button>
+                
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="language-btn" onclick="toggleLanguageDropdown()">
+                        <span class="language-flag" id="currentFlag">🇷🇺</span>
+                        <span id="currentLang">RU</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="language-dropdown" id="languageDropdown">
+                        <div class="language-option active" onclick="changeLanguage('ru', '🇷🇺', 'RU')">
+                            <span class="language-flag">🇷🇺</span>
+                            <span>Русский</span>
+                        </div>
+                        <div class="language-option" onclick="changeLanguage('en', '🇬🇧', 'EN')">
+                            <span class="language-flag">🇬🇧</span>
+                            <span>English</span>
+                        </div>
+                        <div class="language-option" onclick="changeLanguage('uz', '🇺🇿', 'UZ')">
+                            <span class="language-flag">🇺🇿</span>
+                            <span>O'zbek</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="profile-btn-header">
+                    <img src="https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1167debe6-a6a4-462d-8baf-b864359b8e05.png" alt="Профиль" class="profile-avatar">
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="page-wrapper">
+
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="#">Главная</a>
+            <span class="separator">›</span>
+            <span class="current">Настройки / Профиль</span>
+        </div>
+
+        <!-- Page Title -->
+        <h1 class="page-title">Профиль</h1>
+
+        <!-- User Info Bar -->
+        <div class="user-info-bar">
+            <div class="user-info-item">
+                <span class="user-info-label">Ваш ID:</span>
+                <span class="user-info-value">#1126867</span>
+            </div>
+            <div class="user-info-divider"></div>
+            <div class="user-info-item">
+                <span class="user-info-label">Баланс:</span>
+                <span class="user-info-value" style="color: var(--success);">0 UZS</span>
+            </div>
+            <div class="user-info-divider"></div>
+            <div class="user-info-item">
+                <span class="subscription-badge inactive" id="subscriptionBadge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    Нет подписки
+                </span>
+            </div>
+        </div>
+
+        <!-- Profile Layout: Sidebar + Content -->
+        <div class="profile-layout">
+
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <button class="sidebar-item active" data-tab="profile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    Профиль
+                </button>
+                <button class="sidebar-item" data-tab="balance">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    Пополнить баланс
+                </button>
+                <button class="sidebar-item" data-tab="subscription">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    Подписка
+                    <span class="badge">NEW</span>
+                </button>
+                <button class="sidebar-item" data-tab="devices">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                    Устройства
+                </button>
+            </aside>
+
+            <!-- Content Area -->
+            <div class="content-area">
+
+                <!-- TAB 1: Профиль -->
+                <div class="tab-content active" id="tab-profile">
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3 class="profile-card-title">Основной профиль</h3>
+                            <button class="btn-edit">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                                Редактировать
+                            </button>
+                        </div>
+
+                        <div class="profile-avatar-large">
+                            <img src="https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1167debe6-a6a4-462d-8baf-b864359b8e05.png" alt="Аватар">
+                            <div>
+                                <div class="profile-name">{{ user.username }}</div>
+                                <div class="profile-email">{{ user.email }}</div>
+                            </div>
+                        </div>
+
+                        <div class="profile-details">
+                            <div class="profile-detail-item">
+                                <span class="profile-detail-label">Email</span>
+                                <span class="profile-detail-value">{{ user.email }}</span>
+                            </div>
+                            <div class="profile-detail-item">
+                                <span class="profile-detail-label">Телефон</span>
+                                <span class="profile-detail-value">{{ user.phone }}</span>
+                            </div>
+                            <div class="profile-detail-item">
+                                <span class="profile-detail-label">Дата регистрации</span>
+                                <span class="profile-detail-value">{{ user.registration_date }}</span>
+                            </div>
+                            <div class="profile-detail-item">
+                                <span class="profile-detail-label">Язык</span>
+                                <span class="profile-detail-value">{{ user.language }}</span>
+                            </div>
+                            <div class="profile-detail-item">
+                                <span class="profile-detail-label">Страна</span>
+                                <span class="profile-detail-value">{{ user.country }}</span>
+                            </div>
+                            <div class="profile-detail-item">
+                                <span class="profile-detail-label">Часовой пояс</span>
+                                <span class="profile-detail-value">{{ user.timezone }}</span>
+                            </div>
+                        </div>
+
+                        <button class="btn-new-profile">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Новый профиль
+                        </button>
+
+                        <button class="btn-logout">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16 17 21 12 16 7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            Выйти из аккаунта
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Пополнить баланс -->
+                <div class="tab-content" id="tab-balance">
+                    <div class="balance-card">
+                        <h3 class="balance-card-title">Пополнить баланс</h3>
+
+                        <div class="quick-amounts">
+                            <button class="quick-amount-btn selected" data-amount="15000">
+                                15 000
+                                <span class="amount-sub">UZS</span>
+                            </button>
+                            <button class="quick-amount-btn" data-amount="30000">
+                                30 000
+                                <span class="amount-sub">UZS</span>
+                            </button>
+                            <button class="quick-amount-btn" data-amount="50000">
+                                50 000
+                                <span class="amount-sub">UZS</span>
+                            </button>
+                            <button class="quick-amount-btn" data-amount="100000">
+                                100 000
+                                <span class="amount-sub">UZS</span>
+                            </button>
+                        </div>
+
+                        <div class="custom-amount-input">
+                            <input type="number" placeholder="Или введите свою сумму..." id="customAmount">
+                        </div>
+
+                        <div class="payment-methods">
+                            <div class="payment-methods-label">Способ оплаты:</div>
+                            <div class="payment-methods-grid">
+                                <button class="payment-method-btn selected" data-method="payme">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <rect x="2" y="5" width="20" height="14" rx="3"/>
+                                        <line x1="2" y1="10" x2="22" y2="10"/>
+                                    </svg>
+                                    Payme
+                                </button>
+                                <button class="payment-method-btn" data-method="click">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <rect x="2" y="5" width="20" height="14" rx="3"/>
+                                        <line x1="2" y1="10" x2="22" y2="10"/>
+                                        <circle cx="17" cy="15" r="2"/>
+                                    </svg>
+                                    Click
+                                </button>
+                                <button class="payment-method-btn" data-method="uzum">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <circle cx="12" cy="12" r="9"/>
+                                        <path d="M8 12h8"/>
+                                    </svg>
+                                    Uzum
+                                </button>
+                                <button class="payment-method-btn" data-method="card">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                        <line x1="1" y1="10" x2="23" y2="10"/>
+                                    </svg>
+                                    Карта
+                                </button>
+                            </div>
+                        </div>
+
+                        <button class="btn-topup" id="btnTopup">Пополнить баланс</button>
+                    </div>
+
+                    <!-- History -->
+                    <div class="balance-card" style="margin-top: 16px;">
+                        <h3 class="balance-card-title">История пополнений</h3>
+                        <div class="history-list">
+                            <div class="history-item">
+                                <div class="history-item-left">
+                                    <div class="history-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="history-method">Payme</div>
+                                        <div class="history-date">20 Янв 2026, 14:30</div>
+                                    </div>
+                                </div>
+                                <div class="history-amount">+50 000 UZS</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-item-left">
+                                    <div class="history-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="history-method">Click</div>
+                                        <div class="history-date">15 Янв 2026, 09:15</div>
+                                    </div>
+                                </div>
+                                <div class="history-amount">+30 000 UZS</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-item-left">
+                                    <div class="history-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="history-method">Uzum</div>
+                                        <div class="history-date">10 Янв 2026, 18:45</div>
+                                    </div>
+                                </div>
+                                <div class="history-amount">+100 000 UZS</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Подписка -->
+                <div class="tab-content" id="tab-subscription">
+                    <div class="plans-grid">
+                        <!-- Monthly -->
+                        <div class="plan-card" data-plan="monthly">
+                            <div class="plan-duration">1 Месяц</div>
+                            <div class="plan-price">29 000</div>
+                            <div class="plan-price-sub">UZS / месяц</div>
+                            <ul class="plan-features">
+                                <li>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    170+ каналов в HD
+                                </li>
+                                <li>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    1 устройство
+                                </li>
+                                <li>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Архив 7 дней
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Quarterly (Popular) -->
+                        <div class="plan-card popular selected" data-plan="quarterly">
+                            <div class="plan-popular-badge">Популярный</div>
+                            <div class="plan-discount">Экономия 15%</div>
+                            <div class="plan-duration">3 Месяца</div>
+                            <div class="plan-price">74 000</div>
+                            <div class="plan-price-sub">UZS / 3 месяца</div>
+                            <ul class="plan-features">
+                                <li>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    170+ каналов в Full HD
+                                </li>
+                                <li>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    2 устройства
+                                </li>
+                                <li>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Архив 14 дней
+                                </li>
+                                <li>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Без рекламы
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Yearly -->
+                        <div class="plan-card" data-plan="yearly">
+                            <div class="plan-discount">Экономия 30%</div>
+                            <div class="plan-duration">12 Месяцев</div>
+                            <div class="plan-price">199 000</div>
+                            <div class="plan-price-sub">UZS / год</div>
+                            <ul class="plan-features">
+                                <li>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    170+ каналов в 4K
+                                </li>
+                                <li>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    4 устройства
+                                </li>
+                                <li>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Полный архив
+                                </li>
+                                <li>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Без рекламы
+                                </li>
+                                <li>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Приоритетная поддержка
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <button class="btn-subscribe" id="btnSubscribe">Оформить подписку</button>
+
+                    <!-- Benefits -->
+                    <div class="benefits-grid" style="margin-top: 32px;">
+                        <div class="benefit-card">
+                            <div class="benefit-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <polygon points="23 7 16 12 23 17 23 7"/>
+                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                                </svg>
+                            </div>
+                            <div class="benefit-title">170+ каналов</div>
+                            <div class="benefit-desc">Спортивные, новостные, развлекательные каналы со всего мира</div>
+                        </div>
+                        <div class="benefit-card">
+                            <div class="benefit-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                    <line x1="8" y1="21" x2="16" y2="21"/>
+                                    <line x1="12" y1="17" x2="12" y2="21"/>
+                                </svg>
+                            </div>
+                            <div class="benefit-title">Мультиэкран</div>
+                            <div class="benefit-desc">Смотрите на телефоне, планшете, компьютере и Smart TV</div>
+                        </div>
+                        <div class="benefit-card">
+                            <div class="benefit-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <div class="benefit-title">Архив передач</div>
+                            <div class="benefit-desc">Пересматривайте пропущенные передачи из архива до 30 дней</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: Устройства -->
+                <div class="tab-content" id="tab-devices">
+                    <div class="device-card current">
+                        <div class="device-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                            </svg>
+                        </div>
+                        <div class="device-info">
+                            <div class="device-name">Google Chrome — Windows 11</div>
+                            <div class="device-details">Москва, Россия • IP: 185.***.***.42</div>
+                        </div>
+                        <span class="device-status online">Текущее устройство</span>
+                    </div>
+
+                    <div class="device-card">
+                        <div class="device-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                                <line x1="12" y1="18" x2="12.01" y2="18"/>
+                            </svg>
+                        </div>
+                        <div class="device-info">
+                            <div class="device-name">Safari — iPhone 15 Pro</div>
+                            <div class="device-details">Ташкент, Узбекистан • 2 часа назад</div>
+                        </div>
+                        <span class="device-status offline">Не активно</span>
+                        <button class="device-action">Удалить</button>
+                    </div>
+
+                    <div class="device-card">
+                        <div class="device-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                            </svg>
+                        </div>
+                        <div class="device-info">
+                            <div class="device-name">Samsung Smart TV</div>
+                            <div class="device-details">Ташкент, Узбекистан • 5 дней назад</div>
+                        </div>
+                        <span class="device-status offline">Не активно</span>
+                        <button class="device-action">Удалить</button>
+                    </div>
+
+                    <div class="device-card">
+                        <div class="device-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                                <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+                                <line x1="12" y1="18" x2="12.01" y2="18"/>
+                            </svg>
+                        </div>
+                        <div class="device-info">
+                            <div class="device-name">Android — Samsung Galaxy S24</div>
+                            <div class="device-details">Самарканд, Узбекистан • 1 день назад</div>
+                        </div>
+                        <span class="device-status offline">Не активно</span>
+                        <button class="device-action">Удалить</button>
+                    </div>
+
+                    <button class="btn-logout-all">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Выйти со всех устройств
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+                            <rect width="36" height="36" rx="8" fill="#E50914"/>
+                            <path d="M10 10L18 14L26 10V26L18 22L10 26V10Z" fill="white" opacity="0.9"/>
+                            <path d="M10 10L18 14V22L10 26V10Z" fill="white"/>
+                        </svg>
+                        <span class="footer-logo-text">Streamit</span>
+                    </div>
+                    <p class="footer-description">Смотрите 170+ телеканалов, фильмы, сериалы и эксклюзивный контент в одном месте.</p>
+                    <div class="footer-socials">
+                        <a href="#" class="footer-social-btn" aria-label="Telegram"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></a>
+                        <a href="#" class="footer-social-btn" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/></svg></a>
+                        <a href="#" class="footer-social-btn" aria-label="YouTube"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h4>Навигация</h4>
+                    <ul>
+                        <li><a href="#">Главная</a></li>
+                        <li><a href="#">Фильмы</a></li>
+                        <li><a href="#">Сериалы</a></li>
+                        <li><a href="#">Live TV</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Каналы</h4>
+                    <ul>
+                        <li><a href="#">Спорт</a></li>
+                        <li><a href="#">Новости</a></li>
+                        <li><a href="#">Музыка</a></li>
+                        <li><a href="#">Фильмы</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Аккаунт</h4>
+                    <ul>
+                        <li><a href="#">Профиль</a></li>
+                        <li><a href="#">Мой список</a></li>
+                        <li><a href="#">Настройки</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Поддержка</h4>
+                    <ul>
+                        <li><a href="#">Помощь</a></li>
+                        <li><a href="#">Контакты</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Условия</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 Streamit. Все права защищены.</span>
+                <div class="footer-bottom-links">
+                    <a href="#">Условия</a>
+                    <a href="#">Конфиденциальность</a>
+                    <a href="#">Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MOBILE NAV -->
+    <nav class="mobile-nav">
+        <div class="mobile-nav-inner">
+            <a href="#" class="mobile-nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span></a>
+            <a href="#" class="mobile-nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg><span>Фильмы</span></a>
+            <a href="#" class="mobile-nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></a>
+        </div>
+    </nav>
+
+    <script>
+        // ============================================
+        // TAB SWITCHING
+        // ============================================
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const targetTab = item.dataset.tab;
+
+                // Update sidebar active state
+                sidebarItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                // Switch tab content
+                tabContents.forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                document.getElementById('tab-' + targetTab).classList.add('active');
+            });
+        });
+
+        // ============================================
+        // QUICK AMOUNTS
+        // ============================================
+        document.querySelectorAll('.quick-amount-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.quick-amount-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                document.getElementById('customAmount').value = btn.dataset.amount;
+            });
+        });
+
+        document.getElementById('customAmount').addEventListener('input', function() {
+            if (this.value) {
+                document.querySelectorAll('.quick-amount-btn').forEach(b => b.classList.remove('selected'));
+            }
+        });
+
+        // ============================================
+        // PAYMENT METHODS
+        // ============================================
+        document.querySelectorAll('.payment-method-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.payment-method-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+        });
+
+        // ============================================
+        // SUBSCRIPTION PLANS
+        // ============================================
+        document.querySelectorAll('.plan-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+            });
+        });
+
+        // ============================================
+        // TOPUP BUTTON
+        // ============================================
+        document.getElementById('btnTopup').addEventListener('click', function() {
+            const amount = document.getElementById('customAmount').value || '15000';
+            const method = document.querySelector('.payment-method-btn.selected')?.dataset.method || 'payme';
+            const methodNames = { payme: 'Payme', click: 'Click', uzum: 'Uzum', card: 'Карта' };
+
+            this.textContent = 'Обработка...';
+            this.style.pointerEvents = 'none';
+            this.style.opacity = '0.7';
+
+            setTimeout(() => {
+                alert(`Перенаправление на ${methodNames[method]} для оплаты ${parseInt(amount).toLocaleString()} UZS`);
+                this.textContent = 'Пополнить баланс';
+                this.style.pointerEvents = '';
+                this.style.opacity = '';
+            }, 1500);
+        });
+
+        // ============================================
+        // SUBSCRIBE BUTTON
+        // ============================================
+        document.getElementById('btnSubscribe').addEventListener('click', function() {
+            const selectedPlan = document.querySelector('.plan-card.selected');
+            const planName = selectedPlan?.querySelector('.plan-duration')?.textContent || '3 Месяца';
+
+            this.textContent = 'Оформление...';
+            this.style.pointerEvents = 'none';
+            this.style.opacity = '0.7';
+
+            setTimeout(() => {
+                alert(`Подписка "${planName}" оформлена успешно!`);
+                this.textContent = 'Оформить подписку';
+                this.style.pointerEvents = '';
+                this.style.opacity = '';
+
+                // Update subscription badge
+                const badge = document.getElementById('subscriptionBadge');
+                badge.className = 'subscription-badge active';
+                badge.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    Подписка активна
+                `;
+            }, 1500);
+        });
+
+        // ============================================
+        // DEVICE REMOVE BUTTONS
+        // ============================================
+        document.querySelectorAll('.device-action').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const card = this.closest('.device-card');
+                if (confirm('Удалить это устройство?')) {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(20px)';
+                    card.style.transition = 'all 0.3s ease';
+                    setTimeout(() => card.remove(), 300);
+                }
+            });
+        });
+
+        // ============================================
+        // LOGOUT ALL DEVICES
+        // ============================================
+        document.querySelector('.btn-logout-all').addEventListener('click', function() {
+            if (confirm('Выйти со всех устройств? Текущее устройство останется.')) {
+                document.querySelectorAll('.device-card:not(.current)').forEach(card => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(20px)';
+                    card.style.transition = 'all 0.3s ease';
+                    setTimeout(() => card.remove(), 300);
+                });
+            }
+        });
+
+        // ============================================
+        // LOGOUT BUTTON
+        // ============================================
+        document.querySelector('.btn-logout').addEventListener('click', function() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                alert('Вы вышли из аккаунта. Перенаправление на страницу входа...');
+            }
+        });
+
+        // ============================================
+        // EDIT BUTTON
+        // ============================================
+        document.querySelector('.btn-edit').addEventListener('click', function() {
+            alert('Редактирование профиля (в разработке)');
+        });
+
+        // ============================================
+        // NEW PROFILE BUTTON
+        // ============================================
+        document.querySelector('.btn-new-profile').addEventListener('click', function() {
+            alert('Создание нового профиля (в разработке)');
+        });
+
+        // ============================================
+        // MOBILE NAV
+        // ============================================
+        document.querySelectorAll('.mobile-nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+
+        // Проверяем параметр tab в URL и переключаем на нужную вкладку
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            
+            if (tabParam) {
+                const sidebarItem = document.querySelector(`[data-tab="${tabParam}"]`);
+                if (sidebarItem) {
+                    sidebarItem.click(); // Программно кликаем на нужную вкладку
+                }
+            }
+        });
+
+        // ============================================
+        // LANGUAGE SWITCHER
+        // ============================================
+        const translations = {
+            ru: {
+                nav_profile: 'Профиль',
+                nav_balance: 'Баланс',
+                nav_subscription: 'Подписка',
+                nav_devices: 'Устройства',
+                nav_settings: 'Настройки',
+                profile_info: 'Информация профиля',
+                username: 'Имя пользователя',
+                email: 'Email',
+                phone: 'Телефон',
+                member_since: 'Участник с',
+                balance_title: 'Баланс',
+                current_balance: 'Текущий баланс',
+                top_up_balance: 'Пополнить баланс',
+                quick_amounts: 'Быстрые суммы',
+                enter_amount: 'Введите сумму',
+                payment_method: 'Способ оплаты',
+                choose_payment: 'Выберите способ оплаты',
+                subscription_plans: 'Планы подписок',
+                subscribe_btn: 'Оформить подписку',
+                month: 'Месяц',
+                months: 'Месяца',
+                year: 'Год',
+                hd_quality: 'HD качество',
+                uhd_quality: '4K качество',
+                offline_download: 'Загрузка для офлайн просмотра',
+                priority_support: 'Приоритетная поддержка',
+                nav_referral: 'Реферальная программа',  // для ru
+                nav_referral: 'Referral Program',        // для en
+                nav_referral: 'Programa de Referidos'   // для es
+            },
+            en: {
+                nav_profile: 'Profile',
+                nav_balance: 'Balance',
+                nav_subscription: 'Subscription',
+                nav_devices: 'Devices',
+                nav_settings: 'Settings',
+                profile_info: 'Profile Information',
+                username: 'Username',
+                email: 'Email',
+                phone: 'Phone',
+                member_since: 'Member since',
+                balance_title: 'Balance',
+                current_balance: 'Current Balance',
+                top_up_balance: 'Top Up Balance',
+                quick_amounts: 'Quick Amounts',
+                enter_amount: 'Enter Amount',
+                payment_method: 'Payment Method',
+                choose_payment: 'Choose Payment Method',
+                subscription_plans: 'Subscription Plans',
+                subscribe_btn: 'Subscribe',
+                month: 'Month',
+                months: 'Months',
+                year: 'Year',
+                hd_quality: 'HD Quality',
+                uhd_quality: '4K Quality',
+                offline_download: 'Offline Download',
+                priority_support: 'Priority Support'
+            },
+            uz: {
+                nav_profile: 'Profil',
+                nav_balance: 'Balans',
+                nav_subscription: 'Obuna',
+                nav_devices: 'Qurilmalar',
+                nav_settings: 'Sozlamalar',
+                profile_info: 'Profil ma\'lumotlari',
+                username: 'Foydalanuvchi nomi',
+                email: 'Email',
+                phone: 'Telefon',
+                member_since: 'A\'zo bo\'lgan sana',
+                balance_title: 'Balans',
+                current_balance: 'Joriy balans',
+                top_up_balance: 'Balansni to\'ldirish',
+                quick_amounts: 'Tez summalar',
+                enter_amount: 'Summani kiriting',
+                payment_method: 'To\'lov usuli',
+                choose_payment: 'To\'lov usulini tanlang',
+                subscription_plans: 'Obuna rejalari',
+                subscribe_btn: 'Obuna bo\'lish',
+                month: 'Oy',
+                months: 'Oy',
+                year: 'Yil',
+                hd_quality: 'HD sifati',
+                uhd_quality: '4K sifati',
+                offline_download: 'Oflayn yuklab olish',
+                priority_support: 'Prioritetli qo\'llab-quvvatlash'
+            }
+        };
+
+        let currentLanguage = localStorage.getItem('selectedLanguage') || 'ru';
+
+        function toggleLanguageDropdown() {
+            const dropdown = document.getElementById('languageDropdown');
+            dropdown.classList.toggle('active');
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function closeDropdown(e) {
+                if (!e.target.closest('.language-switcher')) {
+                    dropdown.classList.remove('active');
+                    document.removeEventListener('click', closeDropdown);
+                }
+            });
+        }
+
+        function changeLanguage(lang, flag, code) {
+            currentLanguage = lang;
+            localStorage.setItem('selectedLanguage', lang);
+            
+            // Update current language display
+            document.getElementById('currentFlag').textContent = flag;
+            document.getElementById('currentLang').textContent = code;
+            
+            // Update active state in dropdown
+            document.querySelectorAll('.language-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            event.target.closest('.language-option').classList.add('active');
+            
+            // Apply translations
+            applyTranslations();
+            
+            // Close dropdown
+            document.getElementById('languageDropdown').classList.remove('active');
+        }
+
+        function applyTranslations() {
+            const t = translations[currentLanguage];
+            
+            // Update navigation
+            document.querySelector('[data-tab="profile"] span').textContent = t.nav_profile;
+            document.querySelector('[data-tab="balance"] span').textContent = t.nav_balance;
+            document.querySelector('[data-tab="subscription"] span').textContent = t.nav_subscription;
+            document.querySelector('[data-tab="devices"] span').textContent = t.nav_devices;
+            document.querySelector('[data-tab="settings"] span').textContent = t.nav_settings;
+            
+            // Update page title
+            document.querySelector('.page-title').textContent = t.nav_profile;
+            
+            // Update subscription plans (example)
+            const planCards = document.querySelectorAll('.plan-duration');
+            if (planCards[0]) planCards[0].textContent = '1 ' + t.month;
+            if (planCards[1]) planCards[1].textContent = '3 ' + t.months;
+            if (planCards[2]) planCards[2].textContent = '12 ' + t.months;
+            
+            // Update subscribe button
+            const subscribeBtn = document.getElementById('btnSubscribe');
+            if (subscribeBtn) subscribeBtn.textContent = t.subscribe_btn;
+        }
+
+        // Initialize language on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial language
+            const savedLang = localStorage.getItem('selectedLanguage') || 'ru';
+            const langConfig = {
+                'ru': { flag: '🇷🇺', code: 'RU' },
+                'en': { flag: '🇬🇧', code: 'EN' },
+                'uz': { flag: '🇺🇿', code: 'UZ' }
+            };
+            
+            if (langConfig[savedLang]) {
+                document.getElementById('currentFlag').textContent = langConfig[savedLang].flag;
+                document.getElementById('currentLang').textContent = langConfig[savedLang].code;
+                currentLanguage = savedLang;
+            }
+            
+            // Apply translations
+            applyTranslations();
+        });
+
+    </script>
+</body>
+</html>

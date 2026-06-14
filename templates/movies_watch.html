@@ -1,0 +1,2132 @@
+{% extends "base.html" %}
+
+{% block title %}Streamit — Смотрите фильмы и сериалы онлайн{% endblock %}
+
+{% block body_attrs %} data-movie-id="{{ movie.id }}" data-movie-name="{{ movie.name }}" data-movie-subscription="{{ 'true' if movie.is_subscription else 'false' }}" data-user-authenticated="{{ 'true' if user else 'false' }}" data-user-subscription='{{ user_subscription | tojson if user_subscription else "null" }}'{% endblock %}
+
+{% block extra_css %}
+<style>
+      /* ============================================
+            CINEMATIC HERO SECTION
+            ============================================ */
+        .movie-hero {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center top;
+            background-repeat: no-repeat;
+            transition: transform 10s ease-out;
+        }
+
+        .hero-bg.loaded {
+            transform: scale(1.05);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(90deg, rgba(10,10,10,0.9) 0%, rgba(10,10,10,0.7) 40%, rgba(10,10,10,0.3) 70%, rgba(10,10,10,0.1) 100%),
+                linear-gradient(0deg, var(--bg-primary) 0%, rgba(10,10,10,0.8) 8%, rgba(10,10,10,0) 35%);
+        }
+
+        .hero-content {
+            position: absolute;
+            bottom: 12%;
+            left: 48px;
+            max-width: 640px;
+            z-index: 2;
+        }
+
+        .hero-movie-logo {
+            font-family: 'Poppins', sans-serif;
+            font-size: 60px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .hero-movie-logo span {
+            background: linear-gradient(135deg, var(--accent) 0%, #FF6B6B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .hero-rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 215, 0, 0.12);
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            padding: 5px 12px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #FFD700;
+        }
+
+        .hero-rating svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .meta-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            padding: 4px 10px;
+        }
+
+        .meta-chip svg {
+            width: 15px;
+            height: 15px;
+            color: var(--text-muted);
+        }
+
+        .age-rating {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+            height: 28px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 0 6px;
+        }
+
+        .hero-quality {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quality-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: var(--text-secondary);
+        }
+
+        .audio-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.15);
+            color: var(--text-primary);
+        }
+
+        .hero-description {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+        }
+
+        .hero-description.expanded {
+            max-height: 400px;
+        }
+
+        .read-more-btn {
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            padding: 0;
+            margin-bottom: 24px;
+            transition: color var(--transition-fast);
+        }
+
+        .read-more-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* ============================================
+           BUTTONS
+           ============================================ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 32px;
+            border-radius: var(--radius-sm);
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border: none;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--text-primary);
+            box-shadow: 0 4px 20px rgba(229, 9, 20, 0.4);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(229, 9, 20, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.18);
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.25);
+        }
+
+        .btn-icon-only {
+            width: 50px;
+            height: 50px;
+            padding: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-icon-only:hover {
+            background: rgba(255,255,255,0.18);
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 10px 20px;
+            font-size: 13px;
+        }
+
+        /* ============================================
+           MAIN CONTENT AREA
+           ============================================ */
+        .movie-detail-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 48px;
+        }
+
+        /* ============================================
+           TABS NAVIGATION
+           ============================================ */
+        .tabs-section {
+            padding: 32px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tabs-nav {
+            display: flex;
+            gap: 4px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0;
+            overflow-x: auto;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .tabs-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            padding: 14px 24px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+            transition: color var(--transition-fast);
+        }
+
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent);
+            transform: scaleX(0);
+            transition: transform var(--transition-fast);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active::after {
+            transform: scaleX(1);
+        }
+
+        /* ============================================
+           TAB PANELS
+           ============================================ */
+        .tab-panel {
+            display: none;
+            padding: 40px 0;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* ============================================
+           OVERVIEW TAB
+           ============================================ */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 48px;
+            margin-bottom: 56px;
+        }
+
+        .overview-main h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .overview-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 36px;
+        }
+
+        .crew-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .crew-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .crew-item-photo {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--border-color);
+        }
+
+        .crew-item-info {
+            flex: 1;
+        }
+
+        .crew-item-role {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .crew-item-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        /* Sidebar info */
+        .overview-sidebar {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 28px;
+            border: 1px solid var(--border-color);
+        }
+
+        .sidebar-info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-info-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .sidebar-info-item:first-child {
+            padding-top: 0;
+        }
+
+        .sidebar-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 80px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-value {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .sidebar-value a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+
+        .sidebar-value a:hover {
+            color: var(--accent-hover);
+        }
+
+        /* ============================================
+           CAST SECTION
+           ============================================ */
+        .cast-section {
+            margin-bottom: 48px;
+        }
+
+        .cast-section h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .cast-row {
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            padding: 8px 0 16px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .cast-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cast-card {
+            flex: 0 0 auto;
+            width: 110px;
+            text-align: center;
+        }
+
+        .cast-card-photo {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 10px;
+            border: 3px solid var(--border-color);
+            transition: border-color var(--transition-fast), transform var(--transition-fast);
+        }
+
+        .cast-card:hover .cast-card-photo {
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .cast-card-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .cast-card-role {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ============================================
+           SIMILAR / RECOMMENDED MOVIES
+           ============================================ */
+        .section-container {
+            width: 100%;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .view-all-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .view-all-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .view-all-btn svg {
+            transition: transform var(--transition-fast);
+        }
+
+        .view-all-btn:hover svg {
+            transform: translateX(3px);
+        }
+
+        /* Content Row */
+        .content-row-wrapper {
+            position: relative;
+        }
+
+        .content-row {
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 8px 0 16px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .content-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scroll-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-60%);
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10,10,10,0.85);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            transition: all var(--transition-fast);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+        }
+
+        .content-row-wrapper:hover .scroll-btn {
+            opacity: 1;
+        }
+
+        .scroll-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            transform: translateY(-60%) scale(1.1);
+        }
+
+        .scroll-btn-left { left: -10px; }
+        .scroll-btn-right { right: -10px; }
+
+        /* Movie Card (from home page pattern) */
+        .movie-card {
+            flex: 0 0 auto;
+            width: 200px;
+            position: relative;
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+            transform-origin: center bottom;
+        }
+
+        .movie-card:hover {
+            transform: scale(1.08);
+            z-index: 10;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+        }
+
+        .movie-card-poster {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            display: block;
+            transition: filter var(--transition-smooth);
+        }
+
+        .movie-card:hover .movie-card-poster {
+            filter: brightness(0.5);
+        }
+
+        .movie-card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.4) 50%, rgba(10,10,10,0) 100%);
+            opacity: 0;
+            transition: opacity var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 16px 14px;
+        }
+
+        .movie-card:hover .movie-card-overlay {
+            opacity: 1;
+        }
+
+        .movie-card-play {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.7);
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            border-radius: 50%;
+            opacity: 0;
+            transition: all var(--transition-smooth);
+        }
+
+        .movie-card:hover .movie-card-play {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .movie-card-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .movie-card-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .movie-card-rating {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        .movie-card-rating svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .movie-card-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .card-action-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .card-action-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .card-action-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* ============================================
+           TRAILERS TAB
+           ============================================ */
+        .trailers-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .trailer-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+        }
+
+        .trailer-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-card);
+        }
+
+        .trailer-thumb {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+        }
+
+        .trailer-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform var(--transition-smooth);
+        }
+
+        .trailer-card:hover .trailer-thumb img {
+            transform: scale(1.05);
+        }
+
+        .trailer-play-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.4);
+            transition: background var(--transition-fast);
+        }
+
+        .trailer-card:hover .trailer-play-overlay {
+            background: rgba(0,0,0,0.2);
+        }
+
+        .trailer-play-btn {
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 4px 20px rgba(229,9,20,0.4);
+            transition: transform var(--transition-fast);
+        }
+
+        .trailer-card:hover .trailer-play-btn {
+            transform: scale(1.1);
+        }
+
+        .trailer-duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.8);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .trailer-info {
+            padding: 16px;
+        }
+
+        .trailer-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .trailer-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ============================================
+           REVIEWS TAB
+           ============================================ */
+        .reviews-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .review-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .review-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .review-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .review-author-photo {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .review-author-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .review-date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .review-rating-stars {
+            display: flex;
+            gap: 3px;
+        }
+
+        .review-rating-stars svg {
+            width: 16px;
+            height: 16px;
+            color: #FFD700;
+        }
+
+        .review-rating-stars svg.empty {
+            color: var(--border-color);
+        }
+
+        .review-text {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        /* ============================================
+           VIDEO PLAYER MODAL
+           ============================================ */
+        .player-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: none;
+            background: #000;
+        }
+
+        .player-modal.active {
+            display: block;
+        }
+
+        .player-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #000;
+        }
+
+        .player-video-area {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .player-placeholder {
+            text-align: center;
+            color: var(--text-muted);
+            position: absolute;
+        }
+
+        .player-placeholder svg {
+            width: 80px;
+            height: 80px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .player-placeholder h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 24px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .player-placeholder p {
+            font-size: 14px;
+        }
+
+        /* ============================================
+           MOBILE BOTTOM NAV
+           ============================================ */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(10,10,10,0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+            padding: 0 8px;
+        }
+
+        .mobile-nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            height: 100%;
+        }
+
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            transition: color var(--transition-fast);
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .mobile-nav-item.active {
+            color: var(--accent);
+        }
+
+        .mobile-nav-item svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 1200px) {
+            .header-inner {
+                padding: 0 24px;
+            }
+            .hero-content {
+                left: 24px;
+                max-width: 500px;
+            }
+            .hero-movie-logo {
+                font-size: 48px;
+            }
+            .overview-grid {
+                grid-template-columns: 1fr;
+            }
+            .overview-sidebar {
+                order: -1;
+            }
+            .trailers-grid {
+                grid-template-columns: 1fr;
+            }
+            .footer-inner {
+                padding: 0 24px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .nav-menu {
+                display: none;
+            }
+            .mobile-menu-btn {
+                display: flex;
+            }
+            .movie-detail-content {
+                padding: 0 24px;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
+            }
+            .footer-brand {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --header-height: 56px;
+            }
+            .header-inner {
+                padding: 0 16px;
+            }
+            .movie-detail-content {
+                padding: 0 16px;
+            }
+            .hero-content {
+                left: 16px;
+                right: 16px;
+                bottom: 8%;
+            }
+            .hero-movie-logo {
+                font-size: 34px;
+                letter-spacing: -1px;
+            }
+            .hero-meta {
+                gap: 8px;
+            }
+            .hero-description {
+                font-size: 14px;
+            }
+            .hero-actions {
+                gap: 8px;
+            }
+            .btn {
+                padding: 12px 24px;
+                font-size: 14px;
+            }
+            .btn-icon-only {
+                width: 44px;
+                height: 44px;
+            }
+            .movie-card {
+                width: 140px;
+            }
+            .cast-card {
+                width: 90px;
+            }
+            .cast-card-photo {
+                width: 70px;
+                height: 70px;
+            }
+            .tabs-nav {
+                gap: 0;
+            }
+            .tab-btn {
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+            .mobile-nav {
+                display: block;
+            }
+            body {
+                padding-bottom: 64px;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            .footer-bottom {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-movie-logo {
+                font-size: 28px;
+            }
+            .section-title {
+                font-size: 18px;
+            }
+            .overview-main h3,
+            .cast-section h3 {
+                font-size: 18px;
+            }
+            .trailer-title {
+                font-size: 14px;
+            }
+        }
+
+        /* ============================================
+           SUBSCRIPTION MODAL
+           ============================================ */
+        .subscription-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-smooth), visibility var(--transition-smooth);
+        }
+
+        .subscription-modal.show {
+            display: flex;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .subscription-modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform var(--transition-smooth);
+        }
+
+        .subscription-modal.show .subscription-modal-content {
+            transform: scale(1);
+        }
+
+        .subscription-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 24px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+        }
+
+        .subscription-modal-header h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .subscription-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: var(--radius-sm);
+            transition: color var(--transition-fast), background var(--transition-fast);
+        }
+
+        .subscription-modal-close:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .subscription-modal-body {
+            padding: 0 24px 24px;
+            text-align: center;
+        }
+
+        .subscription-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-purple));
+            border-radius: 50%;
+            margin-bottom: 24px;
+            color: white;
+        }
+
+        .subscription-modal-body h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .subscription-modal-body p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 32px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .subscription-plans {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .subscription-plan {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            text-align: left;
+            transition: border-color var(--transition-fast), transform var(--transition-fast);
+        }
+
+        .subscription-plan:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .plan-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .plan-header h4 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .plan-price {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .plan-price .currency {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .plan-price .amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .plan-price .period {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 24px;
+        }
+
+        .plan-features li {
+            color: var(--text-secondary);
+            padding: 8px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .subscription-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .subscription-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(229, 9, 20, 0.3);
+        }
+
+        .subscription-btn:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .subscription-modal-content {
+                width: 95%;
+                margin: 16px;
+            }
+
+            .subscription-modal-header {
+                padding: 20px 20px 0;
+            }
+
+            .subscription-modal-body {
+                padding: 0 20px 20px;
+            }
+
+            .plan-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+    <!-- ============================================
+         CINEMATIC HERO
+         ============================================ -->
+    <section class="movie-hero">
+        <div class="hero-bg" id="heroBg" style="background-image: url('{{ movie.poster or 'https://placehold.co/1600x900/1a1a1a/666666?text=No+Image' }}');"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="hero-movie-logo">{{ movie.name }}</h1>
+
+            <div class="hero-meta">
+                <div class="hero-rating">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    {{ movie.rating or '8.0' }}
+                </div>
+                <span class="meta-chip">{{ movie.year }}</span>
+                <span class="meta-chip">{{ movie.duration or '1ч 45м' }}</span>
+                <span class="age-rating">PG-13</span>
+                <div class="hero-quality">
+                    <span class="quality-badge">4K</span>
+                    <span class="quality-badge">HDR</span>
+                    <span class="quality-badge">Dolby</span>
+                    <span class="audio-badge">5.1</span>
+                </div>
+            </div>
+
+            <div class="hero-description" id="heroDescription">
+                {{ movie.description or 'Описание недоступно.' }}
+            </div>
+            <button class="read-more-btn" id="readMoreBtn">Читать далее</button>
+
+            <div class="hero-actions">
+                <button class="btn btn-primary" id="playNowBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Смотреть
+                </button>
+                <button class="btn btn-secondary" id="trailerBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Трейлер
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         MOVIE DETAIL CONTENT
+         ============================================ -->
+    <div class="movie-detail-content">
+
+        <!-- Tabs Navigation -->
+        <div class="tabs-section">
+            <div class="tabs-nav" id="tabsNav">
+                <button class="tab-btn active" data-tab="overview">Обзор</button>
+                <button class="tab-btn" data-tab="reviews">Отзывы</button>
+                <button class="tab-btn" data-tab="similar">Похожие</button>
+            </div>
+        </div>
+
+        <!-- ============================================
+              OVERVIEW TAB
+              ============================================ -->
+        <div class="tab-panel active" id="tab-overview">
+            <div class="overview-grid">
+                <div class="overview-main">
+                    <h3>Обзор</h3>
+                    <p class="overview-text">
+                        {{ movie.description or 'Описание недоступно.' }}
+                    </p>
+
+                    <!-- Cast -->
+                    <div class="cast-section">
+                        <h3>Актёры</h3>
+                        <div class="cast-row" id="castRow">
+                            {% for actor in movie.actors[:8] %}
+                            <div class="cast-card">
+                                <img src="https://picsum.photos/seed/{{ actor.name.replace(' ', '') if actor.name else actor.id }}/100/100.jpg" 
+                                    alt="{{ actor.name }}" class="cast-card-photo" loading="lazy">
+                                <div class="cast-card-name">{{ actor.name }}</div>
+                                <div class="cast-card-role">{{ actor.role if actor.role else 'Актёр' }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+
+                </div>
+                <div class="overview-sidebar">
+                    <div class="sidebar-info-item">
+                        <span class="sidebar-label">В ролях</span>
+                        <span class="sidebar-value">
+                        {% for actor in movie.actors %}
+                            {% if actor.name %}
+                            <a href="#">{{ actor.name }}</a>
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+                    </div>
+                    <div class="sidebar-info-item">
+                        <span class="sidebar-label">Основано на</span>
+                        <span class="sidebar-value">Dune by Frank Herbert</span>
+                    </div>
+                    <div class="sidebar-info-item">
+                        <span class="sidebar-label">Жанр</span>
+                        <span class="sidebar-value">{{ movie.genres | join(', ') if movie.genres else 'N/A' }}</span>
+                    </div>
+                    <div class="sidebar-info-item">
+                        <span class="sidebar-label">Язык</span>
+                        <span class="sidebar-value">Английский</span>
+                    </div>
+                    <div class="sidebar-info-item">
+                        <span class="sidebar-label">Страна</span>
+                        <span class="sidebar-value">США, Канада</span>
+                    </div>
+                    <div class="sidebar-info-item">
+                        <span class="sidebar-label">Бюджет</span>
+                        <span class="sidebar-value">$190,000,000</span>
+                    </div>
+                    <div class="sidebar-info-item">
+                        <span class="sidebar-label">Студия</span>
+                        <span class="sidebar-value"><a href="#">Warner Bros.</a></span>
+                    </div>
+                    <div class="sidebar-info-item">
+                        <span class="sidebar-label">Релиз</span>
+                        <span class="sidebar-value">1 марта 2024</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+              TRAILERS TAB
+              ============================================ -->
+        <div class="tab-panel" id="tab-trailers">
+            <h3 style="font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 24px;">Трейлеры</h3>
+            <div class="trailers-grid" id="trailersGrid">
+            </div>
+        </div>
+
+        <!-- ============================================
+              CAST & CREW TAB
+              ============================================ -->
+        <div class="tab-panel" id="tab-cast">
+            <div class="cast-section" style="margin-bottom: 48px;">
+                <h3>Все актёры</h3>
+                <div class="cast-row" id="fullCastRow" style="gap: 24px;">
+                </div>
+            </div>
+            <div class="cast-section">
+                <h3>Съёмочная группа</h3>
+                <div class="crew-list" id="crewList">
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+              REVIEWS TAB
+              ============================================ -->
+        <div class="tab-panel" id="tab-reviews">
+            <h3 style="font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 24px;">Отзывы пользователей</h3>
+            <div class="reviews-list" id="reviewsList">
+            </div>
+        </div>
+
+        <!-- ============================================
+              SIMILAR MOVIES TAB
+              ============================================ -->
+        <div class="tab-panel" id="tab-similar">
+            <div class="section-container" style="margin-bottom: 48px;">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Похожие фильмы</h2>
+                    </div>
+                    <button class="view-all-btn">
+                        Все
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="content-row-wrapper">
+                    <button class="scroll-btn scroll-btn-left" onclick="scrollRow(this, -1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="content-row" id="similarRow">
+                        {% if recommended %}
+                            {% for rec_movie in recommended[:6] %}
+                        <a href="/movies/{{ rec_movie.id }}" class="movie-card" style="text-decoration: none; display: block;">
+                            <img src="{{ rec_movie.poster or 'https://placehold.co/200x300/1a1a1a/666666?text=No+Image' }}" alt="{{ rec_movie.name }}" class="movie-card-poster" loading="lazy">
+                            <div class="movie-card-overlay">
+                                <div class="movie-card-play">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                </div>
+                                <div class="movie-card-title">{{ rec_movie.name }}</div>
+                                <div class="movie-card-info">
+                                    <span class="movie-card-rating">
+                                        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        {{ rec_movie.rating or '8.0' }}
+                                    </span>
+                                    <span>{{ rec_movie.year }}</span>
+                                </div>
+                            </div>
+                        </a>
+                            {% endfor %}
+                        {% else %}
+                            <p style="color: var(--text-secondary);">Нет рекомендаций</p>
+                        {% endif %}
+                    </div>
+                    <button class="scroll-btn scroll-btn-right" onclick="scrollRow(this, 1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="section-container" style="margin-bottom: 48px;">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Если вам понравилось, попробуйте</h2>
+                        <p class="section-subtitle">Рекомендовано на основе ваших предпочтений</p>
+                    </div>
+                </div>
+                <div class="content-row-wrapper">
+                    <button class="scroll-btn scroll-btn-left" onclick="scrollRow(this, -1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="content-row" id="recommendedRow"></div>
+                    <button class="scroll-btn scroll-btn-right" onclick="scrollRow(this, 1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="section-container">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Ещё от Denis Villeneuve</h2>
+                    </div>
+                </div>
+                <div class="content-row-wrapper">
+                    <button class="scroll-btn scroll-btn-left" onclick="scrollRow(this, -1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="content-row" id="directorRow"></div>
+                    <button class="scroll-btn scroll-btn-right" onclick="scrollRow(this, 1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         SUBSCRIPTION MODAL
+         ============================================ -->
+    <div class="subscription-modal" id="subscriptionModal">
+        <div class="subscription-modal-content">
+            <div class="subscription-modal-header">
+                <h2>Требуется подписка</h2>
+                <button class="subscription-modal-close" id="subscriptionModalClose">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="subscription-modal-body">
+                <div class="subscription-icon">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+                        <path d="M12 8v4"/>
+                        <path d="M12 16h.01"/>
+                    </svg>
+                </div>
+                
+                <h3>Этот фильм доступен только с подпиской</h3>
+                <p>Оформите подписку чтобы получить доступ к эксклюзивному контенту, включая этот фильм и тысячи других.</p>
+                
+                <div class="subscription-plans">
+                    <div class="subscription-plan">
+                        <div class="plan-header">
+                            <h4>Premium</h4>
+                            <div class="plan-price">
+                                <span class="currency">сум</span>
+                                <span class="amount">29999</span>
+                                <span class="period">/мес</span>
+                            </div>
+                        </div>
+                        <ul class="plan-features">
+                            <li>✓ Доступ ко всем фильмам</li>
+                            <li>✓ Полное отсутствие рекламы</li>
+                            <li>✓ Качество 4K</li>
+                            <li>✓ Смотреть на всех устройствах</li>
+                        </ul>
+                        <button class="subscription-btn premium-btn" data-plan="premium">
+                            Оформить Premium
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         VIDEO PLAYER MODAL
+         ============================================ -->
+    <div class="player-modal" id="playerModal">
+        <div class="player-container">
+            <div class="player-video-area">
+                {% if movie.stream_url %}
+                <video id="playerVideo" 
+                    controls playsinline width="100%" height="100%">
+                    <source src="{{ movie.stream_url }}" type="application/x-mpegURL">
+                </video>
+                {% else %}
+                <div class="player-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <h3>{{ movie.name }}</h3>
+                    <p>Видео недоступно</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Top bar -->
+            <div class="player-title-bar" id="playerTopBar">
+                <div class="player-movie-info">
+                    <div>
+                        <h3>{{ movie.name }}</h3>
+                        <p>Сезон 1 • Фильм • {{ movie.year }}</p>
+                    </div>
+                </div>
+                <button class="player-close-btn" id="playerCloseBtn" aria-label="Закрыть плеер">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         JAVASCRIPT
+         ============================================ -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        // ============================================
+        // MOVIE AND SUBSCRIPTION DATA
+        // ============================================
+
+        const movieData = {
+            id: parseInt(document.body.dataset.movieId),
+            name: document.body.dataset.movieName,
+            is_subscription: document.body.dataset.movieSubscription === 'true'
+        };
+        
+        let userSubscription = null;
+        try {
+            const subscriptionData = document.body.dataset.userSubscription;
+            if (subscriptionData && subscriptionData !== 'null' && subscriptionData.trim() !== '') {
+                userSubscription = JSON.parse(subscriptionData);
+            }
+        } catch (e) {
+            console.warn('Ошибка парсинга данных подписки:', e);
+            userSubscription = null;
+        }
+
+        const userData = {
+            authenticated: document.body.dataset.userAuthenticated === 'true',
+            subscription: userSubscription,
+            id: {{ user.id if user else 'null' }}
+        };
+        
+
+        // ============================================
+        // DATA
+        // ============================================
+        const posterImages = [
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1d6942c46-e779-4730-b502-bba10e8c3f4f.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/17f2726d7-fb2f-4d9e-93dd-6cc41d6b9c26.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1e7527c56-44b4-4029-ba6f-d49456031630.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/18d46fac7-01a2-4867-a652-5150aefbfa6a.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1292280ce-4829-4007-a2e7-c2454dec5f8f.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1fd32efe2-1ae3-486a-9dd2-bae0136f619b.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1427aaa4c-26f1-43a3-94e5-7d02a87f3526.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/17b260451-e775-440a-8111-ae99b90e8c11.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1b1438981-ec35-49f6-b0af-9c78c0d56d22.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1a4037d5f-5879-41e8-b083-3faab70a9e48.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1cfac3994-987e-4ef3-b195-40aa9c8c86b2.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/11e3f530e-fe22-4965-bcca-f4770818defb.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1e77b8b5b-5103-40a6-bd65-11feeb054f2f.png',
+            'https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1a422dacc-a475-41d1-ba54-708694c370d4.png'
+        ];
+
+        const castMembers = [
+            { name: 'Timothée Chalamet', role: 'Paul Atreides', img: 0 },
+            { name: 'Zendaya', role: 'Chani', img: 1 },
+            { name: 'Rebecca Ferguson', role: 'Lady Jessica', img: 2 },
+            { name: 'Javier Bardem', role: 'Stilgar', img: 3 },
+            { name: 'Josh Brolin', role: 'Gurney Halleck', img: 4 },
+            { name: 'Austin Butler', role: 'Feyd-Rautha', img: 5 },
+            { name: 'Florence Pugh', role: 'Princess Irulan', img: 6 },
+            { name: 'Christopher Walken', role: 'Emperor Shaddam', img: 7 },
+            { name: 'Dave Bautista', role: 'Glossu Rabban', img: 8 },
+            { name: 'Stellan Skarsgård', role: 'Baron Harkonnen', img: 9 },
+            { name: 'Charlotte Rampling', role: 'Gaius Helen', img: 10 },
+            { name: 'Léa Seydoux', role: 'Lady Margot', img: 11 }
+        ];
+
+        const crewMembers = [
+            { name: 'Denis Villeneuve', role: 'Режиссёр и сценарист', img: 0 },
+            { name: 'Jon Spaihts', role: 'Со-сценарист', img: 1 },
+            { name: 'Hans Zimmer', role: 'Композитор', img: 2 },
+            { name: 'Greig Fraser', role: 'Оператор', img: 3 },
+            { name: 'Joe Walker', role: 'Монтажёр', img: 4 },
+            { name: 'Patrice Vermette', role: 'Художник-постановщик', img: 5 },
+            { name: 'Mary Zophres', role: 'Дизайнер костюмов', img: 6 },
+            { name: 'Cale Boyter', role: 'Продюсер', img: 7 },
+            { name: 'Mary Parent', role: 'Продюсер', img: 8 },
+            { name: 'Tanya Lapinski', role: 'Исполнительный продюсер', img: 9 }
+        ];
+
+        const trailersData = [
+            { title: 'Официальный трейлер', meta: 'Тизер • Окт 2023', duration: '3:34', img: 0 },
+            { title: 'Финальный трейлер', meta: 'Официальный трейлер • Дек 2023', duration: '2:56', img: 1 },
+            { title: 'IMAX трейлер', meta: 'IMAX эксклюзив • Янв 2024', duration: '1:48', img: 2 },
+            { title: 'За кулисами', meta: 'Съёмки фильма • 2024', duration: '8:12', img: 3 }
+        ];
+
+        const reviewsData = [
+            {
+                author: 'Алекс Морган',
+                date: '15 марта 2024',
+                rating: 5,
+                text: 'Шедевр научной фантастики. Вильнёв превзошёл самого себя, создав визуально ошеломляющее и эмоционально насыщенное продолжение.',
+                img: 0
+            },
+            {
+                author: 'Сара Чен',
+                date: '8 марта 2024',
+                rating: 4,
+                text: 'Невероятный мир и потрясающие визуальные эффекты. Тимоти Шаламе выдаёт лучшую роль в своей карьере.',
+                img: 1
+            },
+            {
+                author: 'Джеймс Ривера',
+                date: '20 марта 2024',
+                rating: 5,
+                text: 'Чистое кинематографическое совершенство. Сцена с песчаным червём стоит цены билета. Каждый кадр — это картина.',
+                img: 2
+            },
+            {
+                author: 'Эмма Уотсон',
+                date: '2 апреля 2024',
+                rating: 4,
+                text: 'Достойное продолжение, расширяющее вселенную, оставаясь верным исходному материалу.',
+                img: 3
+            }
+        ];
+
+        const movieTitles = [
+            'Blade Runner 2049', 'Interstellar', 'Марсианин', 'Прибытие',
+            'Безумный Макс: Дорога ярости', 'Ex Machina', 'Гравитация', 'Начало',
+            'Матрица', 'Чужой: Ромул', 'Оппенгеймер', 'Аватар: Путь воды',
+            'Довод', 'Дюна: Часть первая', 'Звёздные войны: Пробуждение силы', 'Гладиатор'
+        ];
+
+        const directorMovies = ['Blade Runner 2049', 'Дюна: Часть первая', 'Прибытие', 'Sicario', 'Пленницы'];
+
+        // ============================================
+        // RENDER FUNCTIONS
+        // ============================================
+        function createCastCard(member) {
+            const card = document.createElement('div');
+            card.className = 'cast-card';
+            card.innerHTML = '<img src="https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1167debe6-a6a4-462d-8baf-b864359b8e05.png" alt="' + member.name + '" class="cast-card-photo"><div class="cast-card-name">' + member.name + '</div><div class="cast-card-role">' + member.role + '</div>';
+            return card;
+        }
+
+        function createMovieCard(imageSrc, title, rating, year, duration) {
+            const card = document.createElement('div');
+            card.className = 'movie-card';
+            card.innerHTML = '<img src="' + imageSrc + '" alt="' + title + '" class="movie-card-poster" loading="lazy"><div class="movie-card-overlay"><div class="movie-card-play"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><div class="movie-card-title">' + title + '</div><div class="movie-card-info"><span class="movie-card-rating"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' + rating + '</span><span>' + year + '</span><span>' + duration + '</span></div></div>';
+            return card;
+        }
+
+        function createTrailerCard(trailer) {
+            const card = document.createElement('div');
+            card.className = 'trailer-card';
+            card.innerHTML = '<div class="trailer-thumb"><img src="' + posterImages[trailer.img] + '" alt="' + trailer.title + '" loading="lazy"><div class="trailer-play-overlay"><div class="trailer-play-btn"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div><span class="trailer-duration">' + trailer.duration + '</span></div><div class="trailer-info"><div class="trailer-title">' + trailer.title + '</div><div class="trailer-meta">' + trailer.meta + '</div></div>';
+            return card;
+        }
+
+        function createReviewCard(review) {
+            const card = document.createElement('div');
+            card.className = 'review-card';
+            var stars = '';
+            for (var i = 0; i < 5; i++) {
+                if (i < review.rating) {
+                    stars += '<svg viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+                } else {
+                    stars += '<svg viewBox="0 0 24 24" fill="" stroke="#2A2A2A" stroke-width="1" class="empty"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+                }
+            }
+            card.innerHTML = '<div class="review-header"><div class="review-author"><img src="https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1167debe6-a6a4-462d-8baf-b864359b8e05.png" alt="' + review.author + '" class="review-author-photo"><div><div class="review-author-name">' + review.author + '</div><div class="review-date">' + review.date + '</div></div></div><div class="review-rating-stars">' + stars + '</div></div><p class="review-text">' + review.text + '</p>';
+            return card;
+        }
+
+        function createCrewListItem(member) {
+            const item = document.createElement('div');
+            item.className = 'crew-item';
+            item.innerHTML = '<img src="https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1167debe6-a6a4-462d-8baf-b864359b8e05.png" alt="' + member.name + '" class="crew-item-photo"><div class="crew-item-info"><div class="crew-item-role">' + member.role + '</div><div class="crew-item-name">' + member.name + '</div></div>';
+            return item;
+        }
+
+        // ============================================
+        // POPULATE SECTIONS
+        // ============================================
+        function populateSections() {
+            var el;
+            el = document.getElementById('fullCastRow');
+            if (el) for (var j = 0; j < castMembers.length; j++) {
+                el.appendChild(createCastCard(castMembers[j]));
+            }
+
+            el = document.getElementById('crewList');
+            if (el) for (var k = 0; k < crewMembers.length; k++) {
+                el.appendChild(createCrewListItem(crewMembers[k]));
+            }
+
+            el = document.getElementById('trailersGrid');
+            if (el) for (var t = 0; t < trailersData.length; t++) {
+                el.appendChild(createTrailerCard(trailersData[t]));
+            }
+
+            el = document.getElementById('reviewsList');
+            if (el) for (var r = 0; r < reviewsData.length; r++) {
+                el.appendChild(createReviewCard(reviewsData[r]));
+            }
+
+            el = document.getElementById('similarRow');
+            if (el) {
+                for (var i = 0; i < 14; i++) {
+                    var rating = (7 + Math.random() * 2.5).toFixed(1);
+                    var year = 2020 + Math.floor(Math.random() * 6);
+                    var hours = 1 + Math.floor(Math.random() * 2);
+                    var mins = Math.floor(Math.random() * 60);
+                    el.appendChild(createMovieCard(posterImages[i % posterImages.length], movieTitles[i % movieTitles.length], rating, year, hours + 'ч ' + mins.toString().padStart(2, '0') + 'м'));
+                }
+            }
+
+            el = document.getElementById('recommendedRow');
+            if (el) {
+                for (var i = 3; i < 17; i++) {
+                    var rating = (7 + Math.random() * 2.5).toFixed(1);
+                    var year = 2018 + Math.floor(Math.random() * 8);
+                    var hours = 1 + Math.floor(Math.random() * 2);
+                    var mins = Math.floor(Math.random() * 60);
+                    el.appendChild(createMovieCard(posterImages[i % posterImages.length], movieTitles[i % movieTitles.length], rating, year, hours + 'ч ' + mins.toString().padStart(2, '0') + 'м'));
+                }
+            }
+
+            el = document.getElementById('directorRow');
+            if (el) {
+                for (var d = 0; d < directorMovies.length; d++) {
+                    var rating = (7 + Math.random() * 2.5).toFixed(1);
+                    var year = 2010 + Math.floor(Math.random() * 16);
+                    var hours = 1 + Math.floor(Math.random() * 2);
+                    var mins = Math.floor(Math.random() * 60);
+                    el.appendChild(createMovieCard(posterImages[(d + 4) % posterImages.length], directorMovies[d], rating, year, hours + 'ч ' + mins.toString().padStart(2, '0') + 'м'));
+                }
+            }
+        }
+
+        populateSections();
+
+        // ============================================
+        // SCROLL FUNCTIONALITY
+        // ============================================
+        function scrollRow(btn, direction) {
+            var row = btn.parentElement.querySelector('.content-row');
+            if (row) {
+                var scrollAmount = row.clientWidth * 0.75;
+                row.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+            }
+        }
+
+        // ============================================
+        // HERO ANIMATION
+        // ============================================
+        var heroBg = document.getElementById('heroBg');
+        window.addEventListener('load', function() {
+            if (heroBg) heroBg.classList.add('loaded');
+        });
+
+        // ============================================
+        // READ MORE TOGGLE
+        // ============================================
+        var heroDescription = document.getElementById('heroDescription');
+        var readMoreBtn = document.getElementById('readMoreBtn');
+        if (readMoreBtn) {
+            readMoreBtn.addEventListener('click', function() {
+                heroDescription.classList.toggle('expanded');
+                readMoreBtn.textContent = heroDescription.classList.contains('expanded') ? 'Скрыть' : 'Читать далее';
+            });
+        }
+
+        // ============================================
+        // TABS
+        // ============================================
+        var tabBtns = document.querySelectorAll('.tab-btn');
+        var tabPanels = document.querySelectorAll('.tab-panel');
+
+        for (var tb = 0; tb < tabBtns.length; tb++) {
+            tabBtns[tb].addEventListener('click', function() {
+                var targetTab = this.dataset.tab;
+                for (var b = 0; b < tabBtns.length; b++) tabBtns[b].classList.remove('active');
+                for (var p = 0; p < tabPanels.length; p++) tabPanels[p].classList.remove('active');
+                this.classList.add('active');
+                var panel = document.getElementById('tab-' + targetTab);
+                if (panel) panel.classList.add('active');
+            });
+        }
+
+        // ============================================
+        // VIDEO PLAYER MODAL
+        // ============================================
+        var playerModal = document.getElementById('playerModal');
+        var playerCloseBtn = document.getElementById('playerCloseBtn');
+        var playerVideo = document.getElementById('playerVideo');
+
+        // ============================================
+        // SUBSCRIPTION CHECK
+        // ============================================
+        function checkSubscriptionAndOpenPlayer() {
+            if (!movieData.is_subscription) {
+                openPlayer();
+                return;
+            }
+            if (!userData.authenticated) {
+                showSubscriptionModal();
+                return;
+            }
+            if (!userData.subscription || !userData.subscription.has_subscription) {
+                showSubscriptionModal();
+                return;
+            }
+            openPlayer();
+        }
+        
+        function showSubscriptionModal() {
+            var modal = document.getElementById('subscriptionModal');
+            if (modal) {
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        
+        function hideSubscriptionModal() {
+            var modal = document.getElementById('subscriptionModal');
+            if (modal) {
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function openPlayer() {
+            if (!playerModal) return;
+            playerModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Use native HTML5 video with HLS.js if available
+            if (playerVideo && playerVideo.src && playerVideo.src.includes('.m3u8')) {
+                var streamUrl = playerVideo.querySelector('source').getAttribute('src');
+                if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                    var hls = new Hls();
+                    hls.loadSource(streamUrl);
+                    hls.attachMedia(playerVideo);
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        playerVideo.play();
+                    });
+                } else if (playerVideo.canPlayType('application/vnd.apple.mpegurl')) {
+                    playerVideo.play();
+                }
+            } else if (playerVideo) {
+                playerVideo.play();
+            }
+        }
+
+        function closePlayer() {
+            if (!playerModal) return;
+            playerModal.classList.remove('active');
+            document.body.style.overflow = '';
+            if (playerVideo) {
+                playerVideo.pause();
+                playerVideo.currentTime = 0;
+            }
+        }
+
+        var playNowBtn = document.getElementById('playNowBtn');
+        if (playNowBtn) playNowBtn.addEventListener('click', checkSubscriptionAndOpenPlayer);
+
+        var trailerBtn = document.getElementById('trailerBtn');
+        if (trailerBtn) trailerBtn.addEventListener('click', openPlayer);
+
+        if (playerCloseBtn) playerCloseBtn.addEventListener('click', closePlayer);
+
+        var subModalClose = document.getElementById('subscriptionModalClose');
+        if (subModalClose) subModalClose.addEventListener('click', hideSubscriptionModal);
+
+        var subBtn = document.querySelector('.subscription-btn');
+        if (subBtn) {
+            subBtn.addEventListener('click', function() {
+                window.location.href = '/profile?tab=balance';
+            });
+        }
+
+        if (playerModal) {
+            playerModal.addEventListener('click', function(e) {
+                if (e.target === playerModal || e.target.classList.contains('player-video-area')) {
+                    closePlayer();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closePlayer();
+        });
+
+        // ============================================
+        // MOBILE NAV ACTIVE STATE
+        // ============================================
+        var navItems = document.querySelectorAll('.mobile-nav-item');
+        for (var n = 0; n < navItems.length; n++) {
+            navItems[n].addEventListener('click', function() {
+                for (var ni = 0; ni < navItems.length; ni++) navItems[ni].classList.remove('active');
+                this.classList.add('active');
+            });
+        }
+    </script>
+
+{% endblock %}

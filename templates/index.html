@@ -1,0 +1,1349 @@
+{% extends "base.html" %}
+
+{% block title %}Streamit — Смотрите фильмы и сериалы онлайн{% endblock %}
+
+{% block extra_css %}
+
+<style>
+
+
+        /* ============================================
+           HERO BANNER
+           ============================================ */
+        .hero {
+            position: relative;
+            width: 100%;
+            height: 90vh;
+            min-height: 600px;
+            max-height: 900px;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center top;
+            background-repeat: no-repeat;
+            transition: transform 8s ease-out;
+        }
+
+        .hero-bg.loaded {
+            transform: scale(1.05);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(90deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.6) 40%, rgba(10,10,10,0.1) 70%, rgba(10,10,10,0) 100%),
+                linear-gradient(0deg, var(--bg-primary) 0%, rgba(10,10,10,0.8) 15%, rgba(10,10,10,0) 40%);
+        }
+
+        .hero-content {
+            position: absolute;
+            bottom: 18%;
+            left: 48px;
+            max-width: 620px;
+            z-index: 2;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(229, 9, 20, 0.15);
+            border: 1px solid rgba(229, 9, 20, 0.3);
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .hero-badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .hero-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 56px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+            animation: fadeInUp 0.6s ease-out 0.4s both;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, var(--accent) 0%, #FF6B6B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-description {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out 0.6s both;
+        }
+
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+            animation: fadeInUp 0.6s ease-out 0.7s both;
+        }
+
+        .hero-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .hero-meta-item svg {
+            width: 16px;
+            height: 16px;
+            color: var(--text-muted);
+        }
+
+        .hero-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        .hero-rating svg {
+            width: 14px;
+            height: 14px;
+            color: #FFD700;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            animation: fadeInUp 0.6s ease-out 0.8s both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 32px;
+            border-radius: var(--radius-sm);
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border: none;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--text-primary);
+            box-shadow: 0 4px 20px rgba(229, 9, 20, 0.4);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(229, 9, 20, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.18);
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.25);
+        }
+
+        .btn-icon-only {
+            width: 50px;
+            height: 50px;
+            padding: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-icon-only:hover {
+            background: rgba(255,255,255,0.18);
+            transform: translateY(-2px);
+        }
+
+        .hero-indicators {
+            position: absolute;
+            bottom: 8%;
+            left: 48px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 2;
+            animation: fadeInUp 0.6s ease-out 1s both;
+        }
+
+        .hero-indicator {
+            width: 32px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .hero-indicator.active {
+            width: 56px;
+            background: var(--accent);
+        }
+
+        .hero-indicator:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+        }
+
+        /* ============================================
+           CONTENT SECTIONS
+           ============================================ */
+        .content-section {
+            padding: 24px 0;
+            position: relative;
+        }
+
+        .section-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 48px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .section-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .view-all-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .view-all-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .view-all-btn svg {
+            transition: transform var(--transition-fast);
+        }
+
+        .view-all-btn:hover svg {
+            transform: translateX(3px);
+        }
+
+        /* ============================================
+           CONTENT ROW / CAROUSEL
+           ============================================ */
+        .content-row-wrapper {
+            position: relative;
+        }
+
+        .content-row {
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 8px 0 16px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .content-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scroll-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-60%);
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10,10,10,0.85);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            transition: all var(--transition-fast);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+        }
+
+        .content-row-wrapper:hover .scroll-btn {
+            opacity: 1;
+        }
+
+        .scroll-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            transform: translateY(-60%) scale(1.1);
+        }
+
+        .scroll-btn-left {
+            left: -10px;
+        }
+
+        .scroll-btn-right {
+            right: -10px;
+        }
+
+        /* ============================================
+           MOVIE CARD
+           ============================================ */
+        .movie-card {
+            flex: 0 0 auto;
+            width: 200px;
+            position: relative;
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+            transform-origin: center bottom;
+        }
+
+        .movie-card:hover {
+            transform: scale(1.08);
+            z-index: 10;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+        }
+
+        .movie-card-poster {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            display: block;
+            transition: filter var(--transition-smooth);
+        }
+
+        .movie-card:hover .movie-card-poster {
+            filter: brightness(0.5);
+        }
+
+        .movie-card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.4) 50%, rgba(10,10,10,0) 100%);
+            opacity: 0;
+            transition: opacity var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 16px 14px;
+        }
+
+        .movie-card:hover .movie-card-overlay {
+            opacity: 1;
+        }
+
+        .movie-card-play {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.7);
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            border-radius: 50%;
+            opacity: 0;
+            transition: all var(--transition-smooth);
+        }
+
+        .movie-card:hover .movie-card-play {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .movie-card-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .movie-card-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .movie-card-rating {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        .movie-card-rating svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .movie-card-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .card-action-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .card-action-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .card-action-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* ============================================
+           TOP 10 CARDS
+           ============================================ */
+        .top10-card {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: flex-end;
+            width: 260px;
+            position: relative;
+            cursor: pointer;
+            transition: transform var(--transition-smooth);
+        }
+
+        .top10-card:hover {
+            transform: scale(1.05);
+        }
+
+        .top10-number {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 140px;
+            font-weight: 700;
+            line-height: 0.8;
+            color: transparent;
+            -webkit-text-stroke: 3px rgba(255,255,255,0.15);
+            margin-right: -20px;
+            z-index: 1;
+            position: relative;
+            user-select: none;
+        }
+
+        .top10-poster {
+            width: 160px;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            border-radius: var(--radius-md);
+            position: relative;
+            z-index: 2;
+            box-shadow: var(--shadow-card);
+        }
+
+        /* ============================================
+           CONTINUE WATCHING CARDS
+           ============================================ */
+        .continue-card {
+            flex: 0 0 auto;
+            width: 300px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+        }
+
+        .continue-card:hover {
+            transform: scale(1.03);
+            box-shadow: var(--shadow-card);
+        }
+
+        .continue-card-thumb {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            display: block;
+            position: relative;
+        }
+
+        .continue-card-body {
+            padding: 14px;
+        }
+
+        .continue-card-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .continue-card-episode {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        /* ============================================
+           GENRE TAGS
+           ============================================ */
+        .genre-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .genre-tag {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 100px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .genre-tag:hover {
+            background: rgba(229, 9, 20, 0.1);
+            border-color: rgba(229, 9, 20, 0.3);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .genre-tag-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ============================================
+           MOBILE BOTTOM NAV
+           ============================================ */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(10,10,10,0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+            padding: 0 8px;
+        }
+
+        .mobile-nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            height: 100%;
+        }
+
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            transition: color var(--transition-fast);
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .mobile-nav-item.active {
+            color: var(--accent);
+        }
+
+        .mobile-nav-item svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 1200px) {
+            .header-inner {
+                padding: 0 24px;
+            }
+            .section-container {
+                padding: 0 24px;
+            }
+            .hero-content {
+                left: 24px;
+                max-width: 500px;
+            }
+            .hero-title {
+                font-size: 44px;
+            }
+            .movie-card {
+                width: 170px;
+            }
+            .footer-inner {
+                padding: 0 24px;
+            }
+        }
+
+        @media (max-width: 960px) {
+            .nav-menu {
+                display: none;
+            }
+            .mobile-menu-btn {
+                display: flex;
+            }
+            .hero-title {
+                font-size: 36px;
+            }
+            .hero-description {
+                font-size: 14px;
+            }
+            .hero-content {
+                max-width: 85%;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
+            }
+            .footer-brand {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --header-height: 56px;
+            }
+            .header-inner {
+                padding: 0 16px;
+            }
+            .section-container {
+                padding: 0 16px;
+            }
+            .hero {
+                height: 70vh;
+                min-height: 500px;
+            }
+            .hero-content {
+                left: 16px;
+                right: 16px;
+                bottom: 14%;
+                max-width: 100%;
+            }
+            .hero-title {
+                font-size: 30px;
+            }
+            .hero-description {
+                font-size: 13px;
+                -webkit-line-clamp: 2;
+            }
+            .hero-actions {
+                flex-wrap: wrap;
+            }
+            .btn {
+                padding: 12px 24px;
+                font-size: 14px;
+            }
+            .btn-icon-only {
+                width: 44px;
+                height: 44px;
+            }
+            .hero-indicators {
+                left: 16px;
+            }
+            .section-title {
+                font-size: 18px;
+            }
+            .movie-card {
+                width: 140px;
+            }
+            .top10-card {
+                width: 200px;
+            }
+            .top10-number {
+                font-size: 100px;
+            }
+            .top10-poster {
+                width: 120px;
+            }
+            .continue-card {
+                width: 260px;
+            }
+            .mobile-nav {
+                display: block;
+            }
+            body {
+                padding-bottom: 64px;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            .footer-bottom {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 26px;
+            }
+            .hero-badge {
+                font-size: 10px;
+            }
+            .hero-meta {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .movie-card {
+                width: 130px;
+            }
+            .content-row {
+                gap: 10px;
+            }
+        }
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+    <!-- ============================================
+         HERO BANNER
+         ============================================ -->
+    <section class="hero" id="hero">
+        {% if hero_movies %}
+        <div class="hero-bg" id="heroBg" style="background-image: url('{{ hero_movies[0].poster or 'https://placehold.co/1920x1080/1a1a1a/666666?text=No+Image' }}');"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                {% if hero_movies[0].year == '2026' %}Новинка{% else %}Популярное{% endif %}
+            </div>
+            <h1 class="hero-title">{{ hero_movies[0].name }}</h1>
+            <p class="hero-description">{{ hero_movies[0].description or 'Увлекательный фильм для просмотра' }}</p>
+            <div class="hero-meta">
+                <div class="hero-rating">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    {{ hero_movies[0].rating or '0.0' }}
+                </div>
+                <span class="hero-meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    {{ hero_movies[0].year or '2024' }}
+                </span>
+                <span class="hero-meta-item">{{ hero_movies[0].duration or '2ч' }}</span>
+                <span class="hero-meta-item" style="border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 4px; font-size: 12px;">
+                    {% if hero_movies[0].is_subscription %}Премиум{% else %}Бесплатно{% endif %}
+                </span>
+                <span class="hero-meta-item">{{ hero_movies[0].genres|join(', ') if hero_movies[0].genres else 'Драма' }}</span>
+            </div>
+            <div class="hero-actions">
+                <a href="/movies/{{ hero_movies[0].id }}" class="btn btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Смотреть
+                </a>
+                <button class="btn btn-secondary" onclick="showMovieInfo({{ hero_movies[0].id }})">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    Подробнее
+                </button>
+                <button class="btn btn-icon-only" aria-label="Добавить в мой список">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="hero-indicators">
+            {% for movie in hero_movies[:5] %}
+            <div class="hero-indicator {% if loop.first %}active{% endif %}" data-movie-id="{{ movie.id }}"></div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="hero-bg" style="background-image: url('https://placehold.co/1920x1080/1a1a1a/666666?text=No+Movies');"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">Нет доступных фильмов</h1>
+            <p class="hero-description">Добавьте фильмы в базу данных для отображения в hero секции</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- ============================================
+         CONTENT SECTIONS
+         ============================================ -->
+    <main>
+        <!-- Trending Now -->
+        <section class="content-section fade-in-up">
+            <div class="section-container">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">
+                            <span class="section-title-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                            </span>
+                            В тренде
+                        </h2>
+                    </div>
+                    <button class="view-all-btn">
+                        Все
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="content-row-wrapper">
+                    <button class="scroll-btn scroll-btn-left" onclick="scrollRow(this, -1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="content-row" id="trendingRow">
+                        {% for movie in trending[:14] %}
+                        {% if movie and movie.id %}
+                        <a href="/movies/{{ movie.id }}" class="movie-card" style="text-decoration: none; display: block;">
+                            <img src="{{ movie.poster or 'https://placehold.co/200x300/1a1a1a/666666?text=No+Image' }}" alt="{{ movie.name }}" class="movie-card-poster" loading="lazy">
+                            <div class="movie-card-overlay">
+                                <div class="movie-card-play">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                </div>
+                                <div class="movie-card-title">{{ movie.name }}</div>
+                                <div class="movie-card-info">
+                                    <span class="movie-card-rating">
+                                        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        {{ movie.rating or '8.0' }}
+                                    </span>
+                                    <span>{{ movie.year }}</span>
+                                    <span>{{ movie.duration or '1ч 45м' }}</span>
+                                </div>
+                            </div>
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <button class="scroll-btn scroll-btn-right" onclick="scrollRow(this, 1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top 10 -->
+        <section class="content-section fade-in-up">
+            <div class="section-container">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">
+                            <span class="section-title-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            </span>
+                            Топ 10 недели
+                        </h2>
+                        <p class="section-subtitle">Самое популярное в вашем регионе</p>
+                    </div>
+                    <button class="view-all-btn">
+                        Все
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="content-row-wrapper">
+                    <button class="scroll-btn scroll-btn-left" onclick="scrollRow(this, -1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="content-row" id="top10Row">
+                        {% for movie in top10[:10] %}
+                        {% if movie and movie.id %}
+                        <a href="/movies/{{ movie.id }}" class="top10-card" style="text-decoration: none;">
+                            <span class="top10-number">{{ loop.index }}</span>
+                            <img src="{{ movie.poster or 'https://placehold.co/200x300/1a1a1a/666666?text=No+Image' }}" alt="{{ movie.name }}" class="top10-poster" loading="lazy">
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <button class="scroll-btn scroll-btn-right" onclick="scrollRow(this, 1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Continue Watching -->
+        <section class="content-section fade-in-up">
+            <div class="section-container">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">
+                            <span class="section-title-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            </span>
+                            Продолжить просмотр
+                        </h2>
+                        <p class="section-subtitle">Продолжите с того места, где остановились</p>
+                    </div>
+                    <button class="view-all-btn">
+                        Все
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="content-row-wrapper">
+                    <button class="scroll-btn scroll-btn-left" onclick="scrollRow(this, -1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="content-row" id="continueRow">
+                        <!-- Continue watching cards will be injected by JS -->
+                    </div>
+                    <button class="scroll-btn scroll-btn-right" onclick="scrollRow(this, 1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Popular on Streamit -->
+        <section class="content-section fade-in-up">
+            <div class="section-container">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">
+                            <span class="section-title-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            </span>
+                            Популярное на Streamit
+                        </h2>
+                    </div>
+                    <button class="view-all-btn">
+                        Все
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="content-row-wrapper">
+                    <button class="scroll-btn scroll-btn-left" onclick="scrollRow(this, -1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="content-row" id="popularRow">
+                        {% for movie in popular[:14] %}
+                        {% if movie and movie.id %}
+                        <a href="/movies/{{ movie.id }}" class="movie-card" style="text-decoration: none; display: block;">
+                            <img src="{{ movie.poster or 'https://placehold.co/200x300/1a1a1a/666666?text=No+Image' }}" alt="{{ movie.name }}" class="movie-card-poster" loading="lazy">
+                            <div class="movie-card-overlay">
+                                <div class="movie-card-play">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                </div>
+                                <div class="movie-card-title">{{ movie.name }}</div>
+                                <div class="movie-card-info">
+                                    <span class="movie-card-rating">
+                                        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        {{ movie.rating or '8.0' }}
+                                    </span>
+                                    <span>{{ movie.year }}</span>
+                                    <span>{{ movie.duration or '1ч 45м' }}</span>
+                                </div>
+                            </div>
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <button class="scroll-btn scroll-btn-right" onclick="scrollRow(this, 1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recommended for You -->
+        <section class="content-section fade-in-up">
+            <div class="section-container">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">
+                            <span class="section-title-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            </span>
+                            Рекомендуем вам
+                        </h2>
+                        <p class="section-subtitle">На основе вашей истории просмотров</p>
+                    </div>
+                    <button class="view-all-btn">
+                        Все
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="content-row-wrapper">
+                    <button class="scroll-btn scroll-btn-left" onclick="scrollRow(this, -1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="content-row" id="recommendedRow">
+                        {% for movie in recommended[:14] %}
+                        {% if movie and movie.id %}
+                        <a href="/movies/{{ movie.id }}" class="movie-card" style="text-decoration: none; display: block;">
+                            <img src="{{ movie.poster or 'https://placehold.co/200x300/1a1a1a/666666?text=No+Image' }}" alt="{{ movie.name }}" class="movie-card-poster" loading="lazy">
+                            <div class="movie-card-overlay">
+                                <div class="movie-card-play">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                </div>
+                                <div class="movie-card-title">{{ movie.name }}</div>
+                                <div class="movie-card-info">
+                                    <span class="movie-card-rating">
+                                        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        {{ movie.rating or '8.0' }}
+                                    </span>
+                                    <span>{{ movie.year }}</span>
+                                    <span>{{ movie.duration or '1ч 45м' }}</span>
+                                </div>
+                            </div>
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <button class="scroll-btn scroll-btn-right" onclick="scrollRow(this, 1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top TV Shows -->
+        <section class="content-section fade-in-up">
+            <div class="section-container">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">
+                            <span class="section-title-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                            </span>
+                            Топ ТВ-шоу
+                        </h2>
+                    </div>
+                    <button class="view-all-btn">
+                        Все
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="content-row-wrapper">
+                    <button class="scroll-btn scroll-btn-left" onclick="scrollRow(this, -1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="content-row" id="tvShowsRow">
+                        <!-- TV Shows cards will be injected by JS -->
+                    </div>
+                    <button class="scroll-btn scroll-btn-right" onclick="scrollRow(this, 1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- New Releases -->
+        <section class="content-section fade-in-up">
+            <div class="section-container">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">
+                            <span class="section-title-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            </span>
+                            Новинки
+                        </h2>
+                        <p class="section-subtitle">Новые фильмы, добавленные на этой неделе</p>
+                    </div>
+                    <button class="view-all-btn">
+                        Все
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="content-row-wrapper">
+                    <button class="scroll-btn scroll-btn-left" onclick="scrollRow(this, -1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="content-row" id="newReleasesRow">
+                        {% for movie in new_releases[:14] %}
+                        {% if movie and movie.id %}
+                        <a href="/movies/{{ movie.id }}" class="movie-card" style="text-decoration: none; display: block;">
+                            <img src="{{ movie.poster or 'https://placehold.co/200x300/1a1a1a/666666?text=No+Image' }}" alt="{{ movie.name }}" class="movie-card-poster" loading="lazy">
+                            <div class="movie-card-overlay">
+                                <div class="movie-card-play">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                </div>
+                                <div class="movie-card-title">{{ movie.name }}</div>
+                                <div class="movie-card-info">
+                                    <span class="movie-card-rating">
+                                        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        {{ movie.rating or '8.0' }}
+                                    </span>
+                                    <span>{{ movie.year }}</span>
+                                    <span>{{ movie.duration or '1ч 45м' }}</span>
+                                </div>
+                            </div>
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <button class="scroll-btn scroll-btn-right" onclick="scrollRow(this, 1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Genres -->
+        <section class="content-section fade-in-up">
+            <div class="section-container">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">
+                            <span class="section-title-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                            </span>
+                            Поиск по жанрам
+                        </h2>
+                    </div>
+                </div>
+                <div class="genre-row" id="genreRow">
+                    <!-- Genres will be injected by JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ============================================
+    // HERO ANIMATION
+    // ============================================
+    const heroBg = document.getElementById('heroBg');
+    window.addEventListener('load', () => {
+        heroBg.classList.add('loaded');
+    });
+
+    // ============================================
+    // INTERSECTION OBSERVER FOR FADE-IN
+    // ============================================
+    const fadeElements = document.querySelectorAll('.fade-in-up');
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const fadeObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                fadeObserver.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    fadeElements.forEach(el => fadeObserver.observe(el));
+
+    // ============================================
+    // LOAD CONTENT (пример)
+    // ============================================
+    async function loadContent() {
+        // Здесь вы можете загружать фильмы с вашего API
+        // Пример:
+        // const response = await fetch('/api/movies/featured');
+        // const movies = await response.json();
+
+        const sampleMovies = [
+            { id: 1, title: 'Фильм 1' },
+            { id: 2, title: 'Фильм 2' },
+            { id: 3, title: 'Фильм 3' },
+            { id: 4, title: 'Фильм 4' },
+            { id: 5, title: 'Фильм 5' },
+            { id: 6, title: 'Фильм 6' },
+        ];
+
+        const gridHTML = sampleMovies.map(movie => `
+            <div class="card" onclick="window.location.href='/movie/${movie.id}'">
+                <div class="card-image">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                    </svg>
+                </div>
+                <div class="card-title">${movie.title}</div>
+            </div>
+        `).join('');
+
+        document.getElementById('featuredGrid').innerHTML = gridHTML;
+        document.getElementById('popularGrid').innerHTML = gridHTML;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadContent);
+</script>
+{% endblock %}
