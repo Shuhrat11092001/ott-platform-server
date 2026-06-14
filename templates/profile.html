@@ -841,13 +841,13 @@
 
         <!-- Breadcrumb -->
         <div class="breadcrumb">
-            <a href="#">Главная</a>
+            <a href="/">{{ t(request, 'home') }}</a>
             <span class="separator">›</span>
-            <span class="current">Настройки / Профиль</span>
+            <span class="current">{{ t(request, 'profile_settings') }}</span>
         </div>
 
         <!-- Page Title -->
-        <h1 class="page-title">Профиль</h1>
+        <h1 class="page-title">{{ t(request, 'profile_title') }}</h1>
 
         <!-- User Info Bar -->
         <div class="user-info-bar">
@@ -857,7 +857,7 @@
             </div>
             <div class="user-info-divider"></div>
             <div class="user-info-item">
-                <span class="user-info-label">Баланс:</span>
+                <span class="user-info-label">{{ t(request, 'balance_label') }}</span>
                 <span class="user-info-value" style="color: var(--success);">0 UZS</span>
             </div>
             <div class="user-info-divider"></div>
@@ -867,7 +867,7 @@
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                     </svg>
-                    Нет подписки
+                    {{ t(request, 'inactive') }}
                 </span>
             </div>
         </div>
@@ -882,26 +882,26 @@
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                         <circle cx="12" cy="7" r="4"/>
                     </svg>
-                    Профиль
+                    {{ t(request, 'nav_profile') }}
                 </button>
                 <button class="sidebar-item" data-tab="balance">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                         <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                     </svg>
-                    Пополнить баланс
+                    {{ t(request, 'nav_balance') }}
                 </button>
                 <button class="sidebar-item" data-tab="subscription">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                     </svg>
-                    Подписка
+                    {{ t(request, 'nav_subscriptions') }}
                     <span class="badge">NEW</span>
                 </button>
                 <button class="sidebar-item" data-tab="devices">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                         <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
                     </svg>
-                    Устройства
+                    {{ t(request, 'nav_history') }}
                 </button>
             </aside>
 
@@ -912,18 +912,18 @@
                 <div class="tab-content active" id="tab-profile">
                     <div class="profile-card">
                         <div class="profile-card-header">
-                            <h3 class="profile-card-title">Основной профиль</h3>
+                            <h3 class="profile-card-title">{{ t(request, 'profile_card_title') }}</h3>
                             <button class="btn-edit">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                 </svg>
-                                Редактировать
+                                {{ t(request, 'edit') }}
                             </button>
                         </div>
 
                         <div class="profile-avatar-large">
-                            <img src="https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1167debe6-a6a4-462d-8baf-b864359b8e05.png" alt="Аватар">
+                            <img src="https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1167debe6-a6a4-462d-8baf-b864359b8e05.png" alt="{{ t(request, 'avatar_alt') }}">
                             <div>
                                 <div class="profile-name">{{ user.username }}</div>
                                 <div class="profile-email">{{ user.email }}</div>
@@ -932,27 +932,27 @@
 
                         <div class="profile-details">
                             <div class="profile-detail-item">
-                                <span class="profile-detail-label">Email</span>
+                                <span class="profile-detail-label">{{ t(request, 'email_label') }}</span>
                                 <span class="profile-detail-value">{{ user.email }}</span>
                             </div>
                             <div class="profile-detail-item">
-                                <span class="profile-detail-label">Телефон</span>
+                                <span class="profile-detail-label">{{ t(request, 'phone_label') }}</span>
                                 <span class="profile-detail-value">{{ user.phone }}</span>
                             </div>
                             <div class="profile-detail-item">
-                                <span class="profile-detail-label">Дата регистрации</span>
+                                <span class="profile-detail-label">{{ t(request, 'member_since') }}</span>
                                 <span class="profile-detail-value">{{ user.registration_date }}</span>
                             </div>
                             <div class="profile-detail-item">
-                                <span class="profile-detail-label">Язык</span>
+                                <span class="profile-detail-label">{{ t(request, 'language') }}</span>
                                 <span class="profile-detail-value">{{ user.language }}</span>
                             </div>
                             <div class="profile-detail-item">
-                                <span class="profile-detail-label">Страна</span>
+                                <span class="profile-detail-label">{{ t(request, 'country') }}</span>
                                 <span class="profile-detail-value">{{ user.country }}</span>
                             </div>
                             <div class="profile-detail-item">
-                                <span class="profile-detail-label">Часовой пояс</span>
+                                <span class="profile-detail-label">{{ t(request, 'settings') }}</span>
                                 <span class="profile-detail-value">{{ user.timezone }}</span>
                             </div>
                         </div>
@@ -962,7 +962,7 @@
                                 <line x1="12" y1="5" x2="12" y2="19"/>
                                 <line x1="5" y1="12" x2="19" y2="12"/>
                             </svg>
-                            Новый профиль
+                            {{ t(request, 'create_new_profile') }}
                         </button>
 
                         <button class="btn-logout">
@@ -971,7 +971,7 @@
                                 <polyline points="16 17 21 12 16 7"/>
                                 <line x1="21" y1="12" x2="9" y2="12"/>
                             </svg>
-                            Выйти из аккаунта
+                            {{ t(request, 'logout_account') }}
                         </button>
                     </div>
                 </div>
@@ -979,7 +979,7 @@
                 <!-- TAB 2: Пополнить баланс -->
                 <div class="tab-content" id="tab-balance">
                     <div class="balance-card">
-                        <h3 class="balance-card-title">Пополнить баланс</h3>
+                        <h3 class="balance-card-title">{{ t(request, 'top_up') }}</h3>
 
                         <div class="quick-amounts">
                             <button class="quick-amount-btn selected" data-amount="15000">
@@ -1001,11 +1001,11 @@
                         </div>
 
                         <div class="custom-amount-input">
-                            <input type="number" placeholder="Или введите свою сумму..." id="customAmount">
+                            <input type="number" placeholder="{{ t(request, 'quick_amounts') }}..." id="customAmount">
                         </div>
 
                         <div class="payment-methods">
-                            <div class="payment-methods-label">Способ оплаты:</div>
+                            <div class="payment-methods-label">{{ t(request, 'payment_method') }}:</div>
                             <div class="payment-methods-grid">
 
                                 <button class="payment-method-btn selected" data-method="click">
@@ -1017,36 +1017,15 @@
                                     Click
                                 </button>
 
-                                <!-- <button class="payment-method-btn selected" data-method="payme">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                        <rect x="2" y="5" width="20" height="14" rx="3"/>
-                                        <line x1="2" y1="10" x2="22" y2="10"/>
-                                    </svg>
-                                    Payme
-                                </button>
-                                <button class="payment-method-btn" data-method="uzum">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                        <circle cx="12" cy="12" r="9"/>
-                                        <path d="M8 12h8"/>
-                                    </svg>
-                                    Uzum
-                                </button>
-                                <button class="payment-method-btn" data-method="card">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                                        <line x1="1" y1="10" x2="23" y2="10"/>
-                                    </svg>
-                                    Карта
-                                </button> -->
                             </div>
                         </div>
 
-                        <button class="btn-topup" id="btnTopup">Пополнить баланс</button>
+                        <button class="btn-topup" id="btnTopup">{{ t(request, 'top_up') }}</button>
                     </div>
 
                     <!-- History -->
                     <div class="balance-card" style="margin-top: 16px;">
-                        <h3 class="balance-card-title">История пополнений</h3>
+                        <h3 class="balance-card-title">{{ t(request, 'payment_history') }}</h3>
                         <div class="history-list">
                         {% if click_transactions %}
                             {% for t in click_transactions %}
@@ -1076,7 +1055,7 @@
                             {% endfor %}
                         {% else %}
                             <div class="history-item" style="justify-content: center; color: var(--text-muted);">
-                                Пополнений пока нет
+                                {{ t(request, 'history_empty') }}
                             </div>
                         {% endif %}
                     </div>
@@ -1223,17 +1202,17 @@
                             <div class="device-name">Android — Samsung Galaxy S24</div>
                             <div class="device-details">Самарканд, Узбекистан • 1 день назад</div>
                         </div>
-                        <span class="device-status offline">Не активно</span>
-                        <button class="device-action">Удалить</button>
+                        <span class="device-status offline">{{ t(request, 'inactive') }}</span>
+                        <button class="device-action">{{ t(request, 'delete') }}</button>
                     </div>
 
-                    <button class="btn-logout-all">
+                    <button class="btn-logout-all" onclick="if(confirm('{{ t(request, 'confirm_logout_all') }}')) { /* logout logic */ }">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                             <polyline points="16 17 21 12 16 7"/>
                             <line x1="21" y1="12" x2="9" y2="12"/>
                         </svg>
-                        Выйти со всех устройств
+                        {{ t(request, 'logout_all_devices') }}
                     </button>
                 </div>
 
@@ -1245,9 +1224,9 @@
     <!-- MOBILE NAV -->
     <nav class="mobile-nav">
         <div class="mobile-nav-inner">
-            <a href="#" class="mobile-nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span></a>
-            <a href="#" class="mobile-nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg><span>Фильмы</span></a>
-            <a href="#" class="mobile-nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></a>
+            <a href="#" class="mobile-nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>{{ t(request, 'home') }}</span></a>
+            <a href="#" class="mobile-nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg><span>{{ t(request, 'movies') }}</span></a>
+            <a href="#" class="mobile-nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>{{ t(request, 'profile') }}</span></a>
         </div>
     </nav>
 

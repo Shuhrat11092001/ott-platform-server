@@ -1305,18 +1305,18 @@
             </div>
             <button class="filter-toggle-btn" id="filterToggle">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                Фильтры
+                {{ t(request, 'filter') }}
             </button>
             <div class="toolbar-tabs" id="toolbarTabs">
-                <button class="toolbar-tab active" data-filter="all">Все фильмы</button>
-                <button class="toolbar-tab" data-filter="trending">В тренде</button>
-                <button class="toolbar-tab" data-filter="new">Новинки</button>
-                <button class="toolbar-tab" data-filter="top">Топ рейтинг</button>
+                <button class="toolbar-tab active" data-filter="all">{{ t(request, 'movies') }}</button>
+                <button class="toolbar-tab" data-filter="trending">{{ t(request, 'trending') }}</button>
+                <button class="toolbar-tab" data-filter="new">{{ t(request, 'new_releases') }}</button>
+                <button class="toolbar-tab" data-filter="top">{{ t(request, 'top10') }}</button>
             </div>
             <select class="toolbar-select" id="sortSelect">
-                <option value="popularity">Сортировка: Популярность</option>
-                <option value="release_date">Дата выхода</option>
-                <option value="rating">Рейтинг</option>
+                <option value="popularity">{{ t(request, 'sort_by') }}: {{ t(request, 'popular') }}</option>
+                <option value="release_date">{{ t(request, 'release_date') }}</option>
+                <option value="rating">{{ t(request, 'rating') }}</option>
                 <option value="az">А-Я</option>
                 <option value="za">Я-А</option>
             </select>
@@ -1337,22 +1337,22 @@
         <aside class="sidebar" id="sidebar">
             <div class="filter-section">
                 <h3 class="filter-section-title" data-target="genreFilter">
-                    Жанры
+                    {{ t(request, 'genres') }}
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </h3>
                 <div class="filter-chips" id="genreFilter">
-                    <button class="filter-chip active" data-value="all">Все</button>
-                    <button class="filter-chip" data-value="action">Боевик</button>
-                    <button class="filter-chip" data-value="drama">Драма</button>
-                    <button class="filter-chip" data-value="horror">Ужасы</button>
-                    <button class="filter-chip" data-value="scifi">Фантастика</button>
-                    <button class="filter-chip" data-value="comedy">Комедия</button>
-                    <button class="filter-chip" data-value="thriller">Триллер</button>
-                    <button class="filter-chip" data-value="romance">Мелодрама</button>
-                    <button class="filter-chip" data-value="fantasy">Фэнтези</button>
-                    <button class="filter-chip" data-value="mystery">Детектив</button>
-                    <button class="filter-chip" data-value="animation">Мультфильм</button>
-                    <button class="filter-chip" data-value="documentary">Документальный</button>
+                    <button class="filter-chip active" data-value="all">{{ t(request, 'all') }}</button>
+                    <button class="filter-chip" data-value="action">{{ t(request, 'action', 'Боевик') }}</button>
+                    <button class="filter-chip" data-value="drama">{{ t(request, 'drama', 'Драма') }}</button>
+                    <button class="filter-chip" data-value="horror">{{ t(request, 'horror', 'Ужасы') }}</button>
+                    <button class="filter-chip" data-value="scifi">{{ t(request, 'scifi', 'Фантастика') }}</button>
+                    <button class="filter-chip" data-value="comedy">{{ t(request, 'comedy', 'Комедия') }}</button>
+                    <button class="filter-chip" data-value="thriller">{{ t(request, 'thriller', 'Триллер') }}</button>
+                    <button class="filter-chip" data-value="romance">{{ t(request, 'romance', 'Мелодрама') }}</button>
+                    <button class="filter-chip" data-value="fantasy">{{ t(request, 'fantasy', 'Фэнтези') }}</button>
+                    <button class="filter-chip" data-value="mystery">{{ t(request, 'mystery', 'Детектив') }}</button>
+                    <button class="filter-chip" data-value="animation">{{ t(request, 'animation', 'Мультфильм') }}</button>
+                    <button class="filter-chip" data-value="documentary">{{ t(request, 'documentary', 'Документальный') }}</button>
                 </div>
             </div>
 

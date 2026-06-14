@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi import FastAPI, Request, Form, HTTPException, Response, redirect
 from fastapi.responses import HTMLResponse, JSONResponse
 from jinja2 import Environment, FileSystemLoader
 from pydantic import BaseModel, Field, field_validator
@@ -14,6 +14,302 @@ from dotenv import load_dotenv
 
 app = FastAPI()
 logging.basicConfig(level=logging.DEBUG)
+
+# ===== Переводы =====
+TRANSLATIONS = {
+    'uz': {
+        'home': 'Bosh sahifa',
+        'movies': 'Filmlar',
+        'tv': 'TV',
+        'search': 'Qidiruv',
+        'profile': 'Profil',
+        'login': 'Kirish',
+        'register': 'Ro\'yxatdan o\'tish',
+        'logout': 'Chiqish',
+        'navigation': 'Navigatsiya',
+        'genres': 'Janrlar',
+        'new_releases': 'Yangiliklar',
+        'tv_shows': 'TV-shoular',
+        'about': 'Biz haqimizda',
+        'contact': 'Aloqa',
+        'help': 'Yordam',
+        'terms': 'Foydalanish shartlari',
+        'privacy': 'Maxfiylik siyosati',
+        'footer_description': 'Filmlar, TV-shoular va eksklyuziv originalarning asosiy manbai. Istalgan joyda, istalgan vaqtda tomosha qiling.',
+        'all_rights_reserved': 'Barcha huquqlar himoyalangan',
+        'trending': 'Trenddagi',
+        'top10': 'Top 10',
+        'continue_watching': 'Ko\'rishni davom ettirish',
+        'popular': 'Ommabop',
+        'recommended': 'Tavsiya etilgan',
+        'watch_now': 'Hozir tomosha qiling',
+        'more_info': 'Batafsil',
+        'play': 'Ishga tushirish',
+        'add_to_list': 'Ro\'yxatga qo\'shish',
+        'rate': 'Baholash',
+        'share': 'Ulashish',
+        'season': 'Mavsum',
+        'episode': 'Epizod',
+        'year': 'Yil',
+        'duration': 'Davomiyligi',
+        'quality': 'Sifat',
+        'director': 'Rejissyor',
+        'cast': 'Aktyorlar',
+        'storyline': 'Syujet',
+        'reviews': 'Sharhlar',
+        'similar': 'O\'xshash',
+        'loading': 'Yuklanmoqda...',
+        'no_results': 'Natijalar topilmadi',
+        'try_again': 'Qayta urinib ko\'ring',
+        'back': 'Orqaga',
+        'next': 'Keyingi',
+        'previous': 'Oldingi',
+        'page': 'Sahifa',
+        'of': 'dan',
+        'showing': 'Ko\'rsatilmoqda',
+        'results': 'natijalar',
+        'filter': 'Filter',
+        'sort_by': 'Saralash',
+        'date_added': 'Qo\'shilgan sana',
+        'rating': 'Reyting',
+        'name': 'Nomi',
+        'release_date': 'Chiqarilgan sana',
+        'language': 'Til',
+        'country': 'Mamlakat',
+        'subscription': 'Obuna',
+        'plans': 'Rejalar',
+        'pricing': 'Narxlar',
+        'buy': 'Sotib olish',
+        'cancel': 'Bekor qilish',
+        'confirm': 'Tasdiqlash',
+        'save': 'Saqlash',
+        'delete': 'O\'chirish',
+        'edit': 'Tahrirlash',
+        'settings': 'Sozlamalar',
+        'account': 'Hisob',
+        'password': 'Parol',
+        'email': 'Email',
+        'username': 'Foydalanuvchi nomi',
+        'phone': 'Telefon',
+        'address': 'Manzil',
+        'city': 'Shahar',
+        'zip': 'Indeks',
+        'state': 'Viloyat',
+        'birthday': 'Tug\'ilgan kun',
+        'gender': 'Jins',
+        'male': 'Erkak',
+        'female': 'Ayol',
+        'other': 'Boshqa',
+        'select': 'Tanlang',
+        'required': 'Majburiy',
+        'optional': 'Ixtiyoriy',
+        'error': 'Xato',
+        'success': 'Muvaffaqiyatli',
+        'warning': 'Ogohlantirish',
+        'info': 'Ma\'lumot',
+        'close': 'Yopish',
+        'ok': 'OK',
+        'yes': 'Ha',
+        'no': 'Yo\'q',
+        'all': 'Barchasi',
+        'action': 'Jangari',
+        'drama': 'Drama',
+        'horror': 'Qo\'rqinchli',
+        'scifi': 'Fantastika',
+        'comedy': 'Komediya',
+        'thriller': 'Triller',
+        'romance': 'Melodrama',
+        'fantasy': 'Fantaziya',
+        'mystery': 'Detektiv',
+        'animation': 'Multfilm',
+        'documentary': 'Hujjatli',
+        # Profil
+        'profile_title': 'Profil',
+        'profile_settings': 'Sozlamalar / Profil',
+        'balance_label': 'Balans:',
+        'nav_profile': 'Profil',
+        'nav_balance': 'Balans',
+        'nav_history': 'Tarix',
+        'nav_subscriptions': 'Obunalar',
+        'nav_settings': 'Sozlamalar',
+        'logout_btn': 'Chiqish',
+        'balance_title': 'Balans',
+        'top_up': "To'ldirish",
+        'quick_amounts': 'Tezkor summalar',
+        'payment_history': "To'lovlar tarixi",
+        'date': 'Sana',
+        'amount': 'Summa',
+        'status': 'Holat',
+        'history_empty': 'Tarix bo\'sh',
+        'logout_all_devices': 'Barcha qurilmalardan chiqish',
+        'confirm_logout_all': 'Barcha qurilmalardan chiqilsinmi? Joriy qurilma qoladi.',
+        'profile_card_title': 'Shaxsiy ma\'lumotlar',
+        'edit': 'Tahrirlash',
+        'avatar_alt': 'Avatar',
+        'name_label': 'Ism:',
+        'email_label': 'Email:',
+        'phone_label': 'Telefon:',
+        'member_since': "Ro'yxatdan o'tgan sana:",
+        'subscription_status': 'Obuna holati:',
+        'active': 'Faol',
+        'inactive': 'Faol emas',
+        'create_new_profile': 'Yangi profil yaratish',
+        'logout_account': 'Akkauntidan chiqish',
+    },
+    'ru': {
+        'home': 'Главная',
+        'movies': 'Фильмы',
+        'tv': 'ТВ',
+        'search': 'Поиск',
+        'profile': 'Профиль',
+        'login': 'Войти',
+        'register': 'Регистрация',
+        'logout': 'Выйти',
+        'navigation': 'Навигация',
+        'genres': 'Жанры',
+        'new_releases': 'Новинки',
+        'tv_shows': 'ТВ-шоу',
+        'about': 'О нас',
+        'contact': 'Контакты',
+        'help': 'Помощь',
+        'terms': 'Условия использования',
+        'privacy': 'Политика конфиденциальности',
+        'footer_description': 'Ваш главный источник фильмов, ТВ-шоу и эксклюзивных оригиналов. Смотрите в любом месте, в любое время.',
+        'all_rights_reserved': 'Все права защищены',
+        'trending': 'В тренде',
+        'top10': 'Топ 10',
+        'continue_watching': 'Продолжить просмотр',
+        'popular': 'Популярные',
+        'recommended': 'Рекомендуем',
+        'watch_now': 'Смотреть сейчас',
+        'more_info': 'Подробнее',
+        'play': 'Воспроизвести',
+        'add_to_list': 'Добавить в список',
+        'rate': 'Оценить',
+        'share': 'Поделиться',
+        'season': 'Сезон',
+        'episode': 'Эпизод',
+        'year': 'Год',
+        'duration': 'Продолжительность',
+        'quality': 'Качество',
+        'director': 'Режиссер',
+        'cast': 'В ролях',
+        'storyline': 'Сюжет',
+        'reviews': 'Отзывы',
+        'similar': 'Похожие',
+        'loading': 'Загрузка...',
+        'no_results': 'Ничего не найдено',
+        'try_again': 'Попробуйте снова',
+        'back': 'Назад',
+        'next': 'Далее',
+        'previous': 'Пред.',
+        'page': 'Страница',
+        'of': 'из',
+        'showing': 'Показано',
+        'results': 'результатов',
+        'filter': 'Фильтр',
+        'sort_by': 'Сортировать по',
+        'date_added': 'Дата добавления',
+        'rating': 'Рейтинг',
+        'name': 'Название',
+        'release_date': 'Дата выхода',
+        'language': 'Язык',
+        'country': 'Страна',
+        'subscription': 'Подписка',
+        'plans': 'Тарифы',
+        'pricing': 'Цены',
+        'buy': 'Купить',
+        'cancel': 'Отмена',
+        'confirm': 'Подтвердить',
+        'save': 'Сохранить',
+        'delete': 'Удалить',
+        'edit': 'Редактировать',
+        'settings': 'Настройки',
+        'account': 'Аккаунт',
+        'password': 'Пароль',
+        'email': 'Email',
+        'username': 'Имя пользователя',
+        'phone': 'Телефон',
+        'address': 'Адрес',
+        'city': 'Город',
+        'zip': 'Индекс',
+        'state': 'Область',
+        'birthday': 'День рождения',
+        'gender': 'Пол',
+        'male': 'Мужской',
+        'female': 'Женский',
+        'other': 'Другой',
+        'select': 'Выбрать',
+        'required': 'Обязательно',
+        'optional': 'Необязательно',
+        'error': 'Ошибка',
+        'success': 'Успешно',
+        'warning': 'Предупреждение',
+        'info': 'Информация',
+        'close': 'Закрыть',
+        'ok': 'OK',
+        'yes': 'Да',
+        'no': 'Нет',
+        'all': 'Все',
+        'action': 'Боевик',
+        'drama': 'Драма',
+        'horror': 'Ужасы',
+        'scifi': 'Фантастика',
+        'comedy': 'Комедия',
+        'thriller': 'Триллер',
+        'romance': 'Мелодрама',
+        'fantasy': 'Фэнтези',
+        'mystery': 'Детектив',
+        'animation': 'Мультфильм',
+        'documentary': 'Документальный',
+        # Профиль
+        'profile_title': 'Профиль',
+        'profile_settings': 'Настройки / Профиль',
+        'balance_label': 'Баланс:',
+        'nav_profile': 'Профиль',
+        'nav_balance': 'Баланс',
+        'nav_history': 'История',
+        'nav_subscriptions': 'Подписки',
+        'nav_settings': 'Настройки',
+        'logout_btn': 'Выйти',
+        'balance_title': 'Баланс',
+        'top_up': 'Пополнить',
+        'quick_amounts': 'Быстрые суммы',
+        'payment_history': 'История пополнений',
+        'date': 'Дата',
+        'amount': 'Сумма',
+        'status': 'Статус',
+        'history_empty': 'История пуста',
+        'logout_all_devices': 'Выйти со всех устройств',
+        'confirm_logout_all': 'Выйти со всех устройств? Текущее устройство останется.',
+        'profile_card_title': 'Личные данные',
+        'edit': 'Редактировать',
+        'avatar_alt': 'Аватар',
+        'name_label': 'Имя:',
+        'email_label': 'Email:',
+        'phone_label': 'Телефон:',
+        'member_since': 'Дата регистрации:',
+        'subscription_status': 'Статус подписки:',
+        'active': 'Активна',
+        'inactive': 'Не активна',
+        'create_new_profile': 'Создать новый профиль',
+        'logout_account': 'Выйти из аккаунта',
+    }
+}
+
+def get_translation(lang, key, default=None):
+    """Получить перевод для ключа"""
+    if lang not in TRANSLATIONS:
+        lang = 'ru'
+    return TRANSLATIONS[lang].get(key, default if default else key)
+
+def t(request, key, default=None):
+    """Хелпер для получения перевода из запроса"""
+    # Получаем язык из cookies или сессии
+    lang = request.cookies.get('lang', 'ru') if hasattr(request, 'cookies') else 'ru'
+    return get_translation(lang, key, default)
+
+
 
 
 
@@ -93,6 +389,7 @@ class ChannelCreate(BaseModel):
 # Создаём Jinja2 окружение
 env = Environment(loader=FileSystemLoader("templates"))
 env.filters['tojson'] = json.dumps
+env.globals['t'] = t  # Добавляем функцию перевода в глобальные переменные шаблона
 
 
 
@@ -112,6 +409,37 @@ init_subscription_plans()
 def on_startup():
     database.init_db()
     logging.info("Database tables initialized on startup")
+
+
+# ===== Маршрут для переключения языка =====
+@app.post("/set_language")
+async def set_language(request: Request):
+    form_data = await request.form()
+    lang = form_data.get('lang', 'ru')
+    
+    # Проверяем, что язык поддерживается
+    if lang not in ['ru', 'uz']:
+        lang = 'ru'
+    
+    # Получаем referer для редиректа обратно
+    referer = request.headers.get('referer', '/')
+    
+    response = redirect(referer)
+    response.set_cookie(key='lang', value=lang, max_age=31536000, httponly=False)  # 1 год
+    return response
+
+@app.get("/set_language/{lang}")
+async def set_language_get(request: Request, lang: str):
+    # Проверяем, что язык поддерживается
+    if lang not in ['ru', 'uz']:
+        lang = 'ru'
+    
+    # Получаем referer для редиректа обратно
+    referer = request.headers.get('referer', '/')
+    
+    response = redirect(referer)
+    response.set_cookie(key='lang', value=lang, max_age=31536000, httponly=False)  # 1 год
+    return response
 
 
 def check_sign(data, secret_key):
@@ -245,7 +573,7 @@ async def handle_complete(data: dict):
 
 
 @app.get("/", response_class=HTMLResponse)
-def home():
+def home(request: Request):
     trending = database.get_movies_by_section("trending")
     top10 = database.get_movies_by_section("top10")
     continue_watching = database.get_movies_by_section("continue_watching")
@@ -257,7 +585,7 @@ def home():
 
 
     return HTMLResponse(template.render(
-        request={},
+        request=request,
         trending=trending,
         top10=top10,
         continue_watching=continue_watching,
@@ -270,7 +598,7 @@ def home():
 
 
 @app.get("/home_backup", response_class=HTMLResponse)
-def home_backup():
+def home_backup(request: Request):
     trending = database.get_movies_by_section("trending")
     top10 = database.get_movies_by_section("top10")
     continue_watching = database.get_movies_by_section("continue_watching")
@@ -281,7 +609,7 @@ def home_backup():
     hero_movies = database.get_hero_movies(5)  # Получаем 5 топ фильмов
 
     return HTMLResponse(template.render(
-        request={},
+        request=request,
         trending=trending,
         top10=top10,
         continue_watching=continue_watching,
@@ -382,14 +710,14 @@ def get_auth_status(request: Request):
 
 
 @app.get("/login", response_class=HTMLResponse)
-def login_page():
+def login_page(request: Request):
     template = env.get_template("registrate.html")  # нужно создать
-    return HTMLResponse(template.render(request={}))
+    return HTMLResponse(template.render(request=request))
 
 @app.get("/register", response_class=HTMLResponse) 
-def register_page():
+def register_page(request: Request):
     template = env.get_template("registrate.html")  # уже существует
-    return HTMLResponse(template.render(request={}))
+    return HTMLResponse(template.render(request=request))
 
 
 @app.delete("/api/channels/{channel_id}")
@@ -399,14 +727,14 @@ def delete_channel(channel_id: int):
 
 # Админка
 @app.get("/admin", response_class=HTMLResponse)
-def admin():
+def admin(request: Request):
     template = env.get_template("admin/index.html")
-    return HTMLResponse(template.render(request={}), media_type="text/html")
+    return HTMLResponse(template.render(request=request), media_type="text/html")
 
 
 
 @app.get("/movies", response_class=HTMLResponse)
-def movies_page():
+def movies_page(request: Request):
     movies = database.get_all_movies()
     top10 = database.get_movies_by_section("top10")
     popular = database.get_movies_by_section("popular")
@@ -415,7 +743,7 @@ def movies_page():
     
     template = env.get_template("movies.html")
     return HTMLResponse(template.render(
-        request={},
+        request=request,
         movies=movies,
         top10=top10,
         popular=popular,
@@ -470,7 +798,7 @@ def movie_watch_page(movie_id: str, request: Request):
 
 
 @app.get("/livetv", response_class=HTMLResponse)
-def livetv_page():
+def livetv_page(request: Request):
     channels = database.get_all_channels()
     
     # Получить уникальные категории
@@ -478,7 +806,7 @@ def livetv_page():
     
     template = env.get_template("livetv.html")
     return HTMLResponse(template.render(
-        request={}, 
+        request=request, 
         channels=channels,
         categories=categories, # передать категории
         active_page='livetv'  
@@ -486,9 +814,8 @@ def livetv_page():
 
 
 
-
 @app.get("/livetv_backup", response_class=HTMLResponse)
-def livetv_page():
+def livetv_backup_page(request: Request):
     channels = database.get_all_channels()
     
     # Получить уникальные категории
@@ -496,7 +823,7 @@ def livetv_page():
     
     template = env.get_template("livetv_backup.html")
     return HTMLResponse(template.render(
-        request={}, 
+        request=request, 
         channels=channels,
         categories=categories  # передать категории
     ), media_type="text/html")
@@ -504,7 +831,7 @@ def livetv_page():
 
 
 @app.get("/livetv/{channel_id}", response_class=HTMLResponse)
-def livetv_player_page(channel_id: str):
+def livetv_player_page(channel_id: str, request: Request):
     try:
         channel_id = int(channel_id)
     except ValueError:
@@ -516,7 +843,7 @@ def livetv_player_page(channel_id: str):
     
     template = env.get_template("livetv_player.html")
     return HTMLResponse(template.render(
-        request={},
+        request=request,
         channel=channel
     ), media_type="text/html")
 
