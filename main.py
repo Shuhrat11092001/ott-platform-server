@@ -1036,7 +1036,7 @@ def profile_page(request: Request):
 
     # И передать в шаблон:
     return HTMLResponse(template.render(
-        request={},
+        request=request,
         user=user,
         subscription_plans=subscription_plans,
         click_transactions=click_transactions,  # ← добавить
