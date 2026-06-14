@@ -579,13 +579,28 @@
                 </a>
                 <nav>
                     <ul class="nav-menu">
-                        <li><a href="/" class="{{ 'active' if active_page == 'home' else '' }}">Главная</a></li>
-                        <li><a href="/movies" class="{{ 'active' if active_page == 'movies' else '' }}">Фильмы</a></li>
-                        <li><a href="/livetv" class="{{ 'active' if active_page == 'livetv' else '' }}">ТВ</a></li>
+                        <li><a href="/" class="{{ 'active' if active_page == 'home' else '' }}">{{ t(request, 'home') }}</a></li>
+                        <li><a href="/movies" class="{{ 'active' if active_page == 'movies' else '' }}">{{ t(request, 'movies') }}</a></li>
+                        <li><a href="/livetv" class="{{ 'active' if active_page == 'livetv' else '' }}">{{ t(request, 'tv') }}</a></li>
                     </ul>
                 </nav>
             </div>
             <div class="header-right">
+                <!-- Переключатель языка -->
+                <div style="display: flex; gap: 4px; margin-right: 8px;">
+                    <a href="/set_language/uz" 
+                       style="padding: 6px 10px; border-radius: 4px; font-size: 13px; font-weight: 500; text-decoration: none; transition: all 0.2s; {% if request.cookies.get('lang', 'ru') == 'uz' %}background: rgba(229, 9, 20, 0.2); color: #E50914;{% else %}color: var(--text-secondary);{% endif %}"
+                       onmouseover="this.style.background='rgba(229, 9, 20, 0.2)'; this.style.color='#E50914'"
+                       onmouseout="this.style.background='{% if request.cookies.get('lang', 'ru') == 'uz' %}rgba(229, 9, 20, 0.2){% else %}transparent{% endif %}'; this.style.color='{% if request.cookies.get('lang', 'ru') == 'uz' %}#E50914{% else %}var(--text-secondary){% endif %}'">
+                        UZ
+                    </a>
+                    <a href="/set_language/ru" 
+                       style="padding: 6px 10px; border-radius: 4px; font-size: 13px; font-weight: 500; text-decoration: none; transition: all 0.2s; {% if request.cookies.get('lang', 'ru') == 'ru' %}background: rgba(229, 9, 20, 0.2); color: #E50914;{% else %}color: var(--text-secondary);{% endif %}"
+                       onmouseover="this.style.background='rgba(229, 9, 20, 0.2)'; this.style.color='#E50914'"
+                       onmouseout="this.style.background='{% if request.cookies.get('lang', 'ru') == 'ru' %}rgba(229, 9, 20, 0.2){% else %}transparent{% endif %}'; this.style.color='{% if request.cookies.get('lang', 'ru') == 'ru' %}#E50914{% else %}var(--text-secondary){% endif %}'">
+                        RU
+                    </a>
+                </div>
                 <button class="profile-btn" id="profileBtn">
                     <img src="https://image.qwenlm.ai/public_source/93d4d93a-5670-4d65-ae92-e747b4ce7580/1167debe6-a6a4-462d-8baf-b864359b8e05.png" alt="Profile" class="profile-avatar" id="profileAvatar">
                     <svg class="profile-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
