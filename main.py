@@ -10,6 +10,7 @@ import logging
 import redis
 import os
 import hashlib
+from dotenv import load_dotenv
 
 app = FastAPI()
 logging.basicConfig(level=logging.DEBUG)
@@ -36,12 +37,12 @@ def clear_user_sessions(user_id):
         redis_client.delete(f"session:{token}")
     redis_client.delete(old_tokens_key)
 
+load_dotenv()
 
-
-CLICK_SECRET_KEY = "j7jBnlFkvtN"  # уникальная строка, выдается Click
-CLICK_SERVICE_ID = 104138                 # ID вашего сервиса в системе Click
-CLICK_MERCHANT_ID = "61566"              # ID мерчанта (продавца)
-
+# Теперь мы берем данные из переменных окружения
+CLICK_SECRET_KEY = os.getenv("CLICK_SECRET_KEY")
+CLICK_SERVICE_ID = os.getenv("CLICK_SERVICE_ID")
+CLICK_MERCHANT_ID = os.getenv("CLICK_MERCHANT_ID")
 
 
 
